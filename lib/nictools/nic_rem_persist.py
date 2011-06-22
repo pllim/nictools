@@ -25,7 +25,7 @@
 #  08/25/08 - for consistency with other NICMOS tasks in the pipeline, changing BEPCORR
 #             to BEPCORR plus BEPDONE. BEPCORR will not be updated; BEPDONE will be updated to
 #             PERFORMED, SKIPPED, or OMITTED
-#  12/15/08 - Will use default values for used_lo and and persist_lo if BEPEUSELO and BEPVALLO are not in the PMODFILE. 
+#  12/15/08 - Will use default values for used_lo and and persist_lo if BEPEUSELO and BEPVALLO are not in the PMODFILE.
 #  01/15/09 - Changing interface so that ped file and cal file are input, and correction based on calculation of
 #             ped file (CALCFILE) is applied to cal file (TARGFILE). This corresponds to TRAC ticket #317.
 #
@@ -35,8 +35,8 @@ import numpy as N
 import sys, time
 import opusutil
 import persutil
-import string 
-import ndimage    # for median_filter
+import string
+import stsci.ndimage as ndimage    # for median_filter
 
 __version__ = "1.6 (2009 Mar 26)"
 
@@ -49,7 +49,7 @@ _abort    = 3
 
 
 ERROR_RETURN = -2
-CLIP = 4  # number of std to use in sigma clipping  
+CLIP = 4  # number of std to use in sigma clipping
 
 class NicRemPersist:
     """ Remove bright earth persistence persistence from CAL file of NICMOS data (on which pedsub has been run) using a medianed persistence model,
@@ -60,54 +60,54 @@ class NicRemPersist:
                   used_lo = .3, persist_lo = 0.8)
     --> nrp.persist()
 
-    linux command line example: 
+    linux command line example:
        hal> ./nic_rem_persist.py 'n9r7b2bjq_ped.fits','n9r7b2bjq_cal.fits' -d 'same_as_persistring.fits' -m 'same_as_persist_mask.fits' -u 0.4 -p 1.3 -v
 
     """
 
-    def __init__( self, calcfile, targfile, verbosity=1 ,persist_lo=None, used_lo=None, persist_model=None, persist_mask=None, run_stdout=None): 
+    def __init__( self, calcfile, targfile, verbosity=1 ,persist_lo=None, used_lo=None, persist_model=None, persist_mask=None, run_stdout=None):
         """constructor
 
         @param calcfile: name of ped file
         @type calcfile:  string
         @param targfile: name of cal file
         @type targfile:  string
-        @param persist_lo: minimum allowed value of the persistence  
+        @param persist_lo: minimum allowed value of the persistence
         @type persist_lo:  Float32
-        @param used_lo: minimum allowed value of the fraction of pixels used  
+        @param used_lo: minimum allowed value of the fraction of pixels used
         @type used_lo:  Float32
         @param persist_model: filename containing persistence frame (ring median of)
         @type persist_model:  string
-        @param persist_mask: filename containing pixel mask 
+        @param persist_mask: filename containing pixel mask
         @type persist_mask:  string
-        @param run_stdout: open trailer file (pipeline use only) 
-        @type run_stdout: file handle 
+        @param run_stdout: open trailer file (pipeline use only)
+        @type run_stdout: file handle
 
         """
         if (run_stdout != None): # set standard output to trailer file
             self.orig_stdout = sys.stdout # save original stdout
             sys.stdout = run_stdout  # set stdout to open trailer file
 
-        persutil.setVerbosity(verbosity)  
+        persutil.setVerbosity(verbosity)
 
         if (verbosity > 0 ):
             current_time = time.asctime()
-            print '=== BEP', __version__,' starting at ', current_time  
+            print '=== BEP', __version__,' starting at ', current_time
 
         # get parameter values if not specified on command line
-        if (persist_lo == None ): 
-            persist_lo = persutil.getPersist_lo( calcfile) 
+        if (persist_lo == None ):
+            persist_lo = persutil.getPersist_lo( calcfile)
 
         if (used_lo == None ):
             used_lo = persutil.getUsed_lo( calcfile)
-        
+
         if (persist_model == None ):
             persist_model = persutil.getPersist_model( calcfile)
 
         if (persist_mask == None ):
             persist_mask = persutil.getPersist_mask( calcfile)
 
-        # do some parameter type checking, if not already performed at the command-line      
+        # do some parameter type checking, if not already performed at the command-line
         if ( __name__ != "__main__"):
               [ persist_lo, used_lo, persist_model, persist_mask ] = check_py_pars(self, calcfile, targfile, persist_lo, used_lo, persist_model, persist_mask)
 
@@ -118,20 +118,20 @@ class NicRemPersist:
         self.persist_model = persist_model
         self.persist_mask = persist_mask
         self.verbosity = verbosity
-        self.run_stdout = run_stdout   
-        self._applied = None   
- 
+        self.run_stdout = run_stdout
+        self._applied = None
+
     def persist( self ):
-        """ remove persistence due to the full bright Earth.    
+        """ remove persistence due to the full bright Earth.
 
         """
 
         calcfile = self.calcfile
         targfile = self.targfile
-        persist_lo = self.persist_lo 
-        used_lo = self.used_lo 
-        persist_model = self.persist_model 
-        persist_mask = self.persist_mask 
+        persist_lo = self.persist_lo
+        used_lo = self.used_lo
+        persist_model = self.persist_model
+        persist_mask = self.persist_mask
         verbosity = self.verbosity
 
        # get PED file header to read PMODFILE and PMSKFILE
@@ -139,44 +139,44 @@ class NicRemPersist:
            fh_calcfile = pyfits.open( calcfile, mode='update')
         except:
            opusutil.PrintMsg("F","ERROR "+ str('Unable to open PED file') + str(calcfile))
-           self._applied = _error  
-  
+           self._applied = _error
+
            sys.exit( ERROR_RETURN)
 
         try:  # read the image for the persistence model
            fh_per_median = pyfits.open( self.persist_model )
-        except:    
+        except:
            opusutil.PrintMsg("F"," ERROR "+ str('Unable to open medianed persistence model file') + str(persist_model))
-           self._applied = _error  
-           
+           self._applied = _error
+
            sys.exit( ERROR_RETURN)
-        ps = fh_per_median[0].data 
+        ps = fh_per_median[0].data
 
         try:
            fh_targfile = pyfits.open( targfile, mode='update')
         except:
            opusutil.PrintMsg("F","ERROR "+ str('Unable to open CAL file') + str(targfile))
-           self._applied = _error 
-           
+           self._applied = _error
+
            sys.exit( ERROR_RETURN)
 
         try:  # read the image for the mask
            fh_per_mask = pyfits.open( self.persist_mask )
-        except:    
+        except:
            opusutil.PrintMsg("F"," ERROR "+ str('Unable to open the mask file') + str(persist_mask))
-           self._applied = _error  
+           self._applied = _error
 
-           sys.exit( ERROR_RETURN)           
+           sys.exit( ERROR_RETURN)
         per_mask = fh_per_mask[0].data  # persistence mask data (0 is good, non-0 is bad)
 
         calcimage = fh_calcfile[1].data    #  load input PED image data
 
-        targimage = fh_targfile[1].data    #  load input CAL image data  
+        targimage = fh_targfile[1].data    #  load input CAL image data
 
         med_mask = calcimage *0  # for size; needed for median call
 
         dq_data = fh_calcfile[3].data  # read the dq array data (0 is good, non-0 is bad)
-        
+
         dq_plus_per_mask = dq_data + per_mask # combined mask
 
         cir_mask = make_footprint( 3, 6 ) # make annular mask for ring median with inner,outer radii = 3,6
@@ -185,7 +185,7 @@ class NicRemPersist:
         ndimage.median_filter(calcimage, footprint = cir_mask, output = imrm)  #  generate ring median image
 
         src = calcimage - imrm  # this image is zero except for sources
-          
+
         md, std = iterstatc( CLIP, src ) # returns clipped mean and standard deviation
 
         level = median(calcimage, med_mask)
@@ -195,56 +195,56 @@ class NicRemPersist:
     #      within 'CLIP' standard deviations, and
     #      less than 150% of the median, and
     #      not set in combined mask
-        gd = ((src < md+CLIP*std) & (src > md-CLIP*std) & (calcimage < 1.5*level) & (dq_plus_per_mask == 0)) 
+        gd = ((src < md+CLIP*std) & (src > md-CLIP*std) & (calcimage < 1.5*level) & (dq_plus_per_mask == 0))
 
-        num_gd = N.add.reduce( N.add.reduce( gd )) 
-        used =  float(num_gd)/float( src.shape[0]* src.shape[1]) 
+        num_gd = N.add.reduce( N.add.reduce( gd ))
+        used =  float(num_gd)/float( src.shape[0]* src.shape[1])
         self.used = used
 
     #     set up the matrices for a linear system of equations
         y = calcimage[gd]   #this is the image
         ng = len(y)
-        x = N.zeros( [ng,2], dtype=N.float64 ) 
+        x = N.zeros( [ng,2], dtype=N.float64 )
         x[:,0] = 1.0     # this part of the model is a flat sky
         x[:,1] = ps[gd]  # this part of the model is an image, i.e., the  persistence image
 
-    #     inverts matrix to solve for the parameters       
-        delta = N.dot(N.dot(N.linalg.inv( N.dot( N.transpose(x),x)),N.transpose(x)),y) 
+    #     inverts matrix to solve for the parameters
+        delta = N.dot(N.dot(N.linalg.inv( N.dot( N.transpose(x),x)),N.transpose(x)),y)
 
         sky = delta[0]        # parameter 1: sky
         self.sky = sky
-        
+
         persist = delta[1]    # parameter 2: level of persistence
         self.persist = persist
-        
-        correct = targimage - delta[1]*ps  # remove the least-squares fraction of the persistence image from the cal file image 
+
+        correct = targimage - delta[1]*ps  # remove the least-squares fraction of the persistence image from the cal file image
 
         if (verbosity > 1):
               print ' sky =', sky, ' persist = ' , persist,' used =',used
 
     #     write correction if fraction of pixels used and calculated persistence exceed thresholds
         if ( persist < self.persist_lo ):
-              self._applied = _none  
+              self._applied = _none
 
               if (verbosity > 0):
                   print ' The calculated persistence for this file is ', persist,', which is below the minimum allowed value of the persistence (', persist_lo,').  Therefore no corrected image will be written.'
 
         elif ( used < self.used_lo ):
-              self._applied = _none  
-              
+              self._applied = _none
+
               if (verbosity > 0):
                   print ' The fraction of ped file pixels used for the calculation is ', used,', which is below the minimum allowed value of the fraction (', used_lo,').  Therefore no corrected image will be written.'
 
-              fh_targfile[0].header.update( key = 'BEPDONE', value = 'SKIPPED') 
+              fh_targfile[0].header.update( key = 'BEPDONE', value = 'SKIPPED')
         else:   # update target file (CAL) with required keywords
-              self._applied = _success  
+              self._applied = _success
 
               fh_targfile[1].data = correct
-              fh_targfile[0].header.update( key = 'BEPSCALE', value = persist) 
-              fh_targfile[0].header.update( key = 'BEPFRAC', value = used) 
-              fh_targfile[0].header.update( key = 'BEPVALLO', value = self.persist_lo) 
+              fh_targfile[0].header.update( key = 'BEPSCALE', value = persist)
+              fh_targfile[0].header.update( key = 'BEPFRAC', value = used)
+              fh_targfile[0].header.update( key = 'BEPVALLO', value = self.persist_lo)
               fh_targfile[0].header.update( key = 'BEPUSELO', value = self.used_lo)
-              fh_targfile[0].header.update( key = 'BEPDONE', value = 'PERFORMED')  
+              fh_targfile[0].header.update( key = 'BEPDONE', value = 'PERFORMED')
 
         if fh_calcfile:
            fh_calcfile.close()
@@ -252,16 +252,16 @@ class NicRemPersist:
         if fh_targfile:
            fh_targfile.close()
 
-        if (verbosity > 0 ):  
+        if (verbosity > 0 ):
            self.print_pars()
            current_time = time.asctime()
-           print '=== BEP finished at ', current_time  
+           print '=== BEP finished at ', current_time
 
         if (self.run_stdout  != None):  #reset stdout if needed
-           sys.stdout = self.orig_stdout 
+           sys.stdout = self.orig_stdout
 
         return self._applied
-          
+
     # end of def persist
 
     def print_pars(self ):
@@ -280,23 +280,23 @@ class NicRemPersist:
         print '  The fraction of pixels used :  ' , self.used
 
 
-def check_py_pars(self, calcfile, targfile, persist_lo, used_lo, persist_model, persist_mask):  
+def check_py_pars(self, calcfile, targfile, persist_lo, used_lo, persist_model, persist_mask):
        """ When run under python, check validity of input parameters. For unspecified *_lo parameters, the
            user will be given the option of typing in a value or accepting the default value. For an unspecified
            model(mask) file, will try to get file name from PMODFILE(PMSKFILE) from input file header, otherwise
-           will get default value from persutil.           
+           will get default value from persutil.
 
        @param calcfile: name of PED file
        @type calcfile: string
        @param targfile: name of CAL file
        @type targfile: string
-       @param persist_lo: minimum allowed value of the persistence 
+       @param persist_lo: minimum allowed value of the persistence
        @type persist_lo: Float32
-       @param used_lo: minimum allowed value of the fraction of pixels used 
+       @param used_lo: minimum allowed value of the fraction of pixels used
        @type used_lo: Float32
        @param persist_model: filename containing persistence frame (ring median of)
        @type persist_model:  string
-       @param persist_mask: filename containing pixel mask 
+       @param persist_mask: filename containing pixel mask
        @type persist_mask:  string
 
        @return: persist_lo, used_lo, persist_model, persist_mask
@@ -309,7 +309,7 @@ def check_py_pars(self, calcfile, targfile, persist_lo, used_lo, persist_model, 
             fh_calcfile.close()
        except:
             opusutil.PrintMsg("F","ERROR - unable to open the PED file  "+ str(calcfile))
-            self._applied = _error 
+            self._applied = _error
 
             sys.exit( ERROR_RETURN)
 
@@ -319,7 +319,7 @@ def check_py_pars(self, calcfile, targfile, persist_lo, used_lo, persist_model, 
             fh_targfile.close()
        except:
             opusutil.PrintMsg("F","ERROR - unable to open the CAL file  "+ str(targfile))
-            self._applied = _error  
+            self._applied = _error
 
             sys.exit( ERROR_RETURN)
 
@@ -370,9 +370,9 @@ def check_cl_pars(calcfile, targfile, persist_lo, used_lo):
        @type calcfile: string
        @param targfile: name of cal file
        @type targfile: string
-       @param persist_lo: minimum allowed value of the persistence 
+       @param persist_lo: minimum allowed value of the persistence
        @type persist_lo: Float32
-       @param used_lo: minimum allowed value of the fraction of pixels used 
+       @param used_lo: minimum allowed value of the fraction of pixels used
        @type used_lo: Float32
 
        @return: persist_lo, used_lo
@@ -384,7 +384,7 @@ def check_cl_pars(calcfile, targfile, persist_lo, used_lo):
         fh_c0.close()
    except:
         opusutil.PrintMsg("F","ERROR - unable to open the PED file  "+ str(calcfile))
-        #self._applied = _error 
+        #self._applied = _error
 
         sys.exit( ERROR_RETURN)
 
@@ -393,8 +393,8 @@ def check_cl_pars(calcfile, targfile, persist_lo, used_lo):
         fh_c0.close()
    except:
         opusutil.PrintMsg("F","ERROR - unable to open the cal file  "+ str(targfile))
-        #self._applied = _error 
-              
+        #self._applied = _error
+
         sys.exit( ERROR_RETURN)
 
    try:
@@ -402,7 +402,7 @@ def check_cl_pars(calcfile, targfile, persist_lo, used_lo):
           persist_lo = string.atof(persist_lo)
    except:
        print ' The persist_lo value entered (',persist_lo,') is invalid. Try again'
-       #self._applied = _error 
+       #self._applied = _error
 
        sys.exit( ERROR_RETURN)
 
@@ -411,14 +411,14 @@ def check_cl_pars(calcfile, targfile, persist_lo, used_lo):
           used_lo = string.atof(used_lo)
    except:
        print ' The used_lo value entered (',used_lo,') is invalid. Try again'
-       #self._applied = _error  
+       #self._applied = _error
 
        sys.exit( ERROR_RETURN)
 
    return  persist_lo, used_lo
 
 
-def make_footprint(rin, rout): 
+def make_footprint(rin, rout):
     """ Make an annular mask footprint for use in ndimage.median_filter to create a ring median image.
         Sets all pixels between rin and rout to 1.
 
@@ -437,7 +437,7 @@ def make_footprint(rin, rout):
 
     for ii in range(asize):
        for jj in range(asize):
-           d2 = (ii-x_ctr)**2 + (jj-y_ctr)**2 
+           d2 = (ii-x_ctr)**2 + (jj-y_ctr)**2
            if (d2 >= rin*rin and d2 <= rout*rout):
                mask[ ii, jj ] = 1
 
@@ -447,24 +447,24 @@ def make_footprint(rin, rout):
 def iterstatc( clip, d ):
     """  version of nicmos iterstat: calculate sigma-clipped mean
          and standart deviation
-    
-    @param clip: number of std to use in sigma clipping  
+
+    @param clip: number of std to use in sigma clipping
     @type clip:  Float32
     @param d: array of values to sigma clip
     @type clip:  Float32
-    
+
     @return:  clipped mean, clipped std
-    @rtype:  float, float    
+    @rtype:  float, float
     """
 
     img = d
     md = img.mean()
     std = img.std()
-    for ii in range(6): 
+    for ii in range(6):
       gd = N.where((img < md+CLIP*std) & (img > md-CLIP*std))
       md = img[gd].mean()
       std = img[gd].std()
-   
+
     return md, std
 
 
@@ -518,14 +518,14 @@ if __name__=="__main__":
             @type cmdline: list of strings
         """
 
-        if ( sys.argv[1] ): calcfile = sys.argv[1] 
-        if ( sys.argv[2] ): targfile = sys.argv[2] 
-        [ options, args, parser ] = persutil.getOptions() 
-       
+        if ( sys.argv[1] ): calcfile = sys.argv[1]
+        if ( sys.argv[2] ): targfile = sys.argv[2]
+        [ options, args, parser ] = persutil.getOptions()
+
         try:
             [ persist_lo, used_lo] = check_cl_pars(calcfile, targfile, persist_lo, used_lo)
-            nrp = NicRemPersist( calcfile, targfile, persist_lo=options.persist_lo, used_lo=options.used_lo, 
-                                persist_model=options.persist_model, persist_mask=options.persist_mask, 
+            nrp = NicRemPersist( calcfile, targfile, persist_lo=options.persist_lo, used_lo=options.used_lo,
+                                persist_model=options.persist_model, persist_mask=options.persist_mask,
                                 verbosity=options.verbosity )
             nrp_stat = nrp.persist()
 

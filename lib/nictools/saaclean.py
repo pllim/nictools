@@ -33,14 +33,13 @@ __vdate__="2010-10-20"
 
 # The above text is duplicated in the __init__ file for the package, since
 #that's where it shows up for the user.
-from pytools import numerixenv #Temporary NUMERIX environment check 
-from pytools import fileutil
+from stsci.tools import numerixenv #Temporary NUMERIX environment check 
+from stsci.tools import fileutil
 import os 
 import exceptions
 import numpy as N, pyfits
-import imagestats #to check the version
-from imagestats import ImageStats as imstat #pyssg lib
-from imagestats.histogram1d import histogram1d
+from stsci.imagestats import ImageStats as imstat #pyssg lib
+from stsci.imagestats.histogram1d import histogram1d
 import SP_LeastSquares as LeastSquares #Excerpt from Hinsen's Scientific Python
 from numpy.linalg import LinAlgError
 

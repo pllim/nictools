@@ -87,8 +87,8 @@ import tfbutil
 import opusutil
 import numpy as N
 import pyfits
-import pytools 
-from pytools import parseinput 
+import stsci.tools 
+from stsci.tools import parseinput 
 
 
 # Define some constants

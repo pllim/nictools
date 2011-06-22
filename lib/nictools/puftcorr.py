@@ -13,7 +13,7 @@ For more information:
 
           The algorithm and IDL prototype were developed by L.Bergeron, but
           never made publicly available.
-          
+
 Dependencies:
           numpy v1.0.2dev3534 or higher
           pyfits v1.1b4 or higher
@@ -26,15 +26,15 @@ __version__="0.17"
 __vdate__="2007-11-30"
 
 #.....................................................
-from pytools import numerixenv  #Temporary NUMERIX environment check
+from stsci.tools import numerixenv  #Temporary NUMERIX environment check
 
 #.....................................................
 import os, sys, shutil
 import exceptions
 import math
 import numpy as N
-import ndimage
-import convolve as conv
+import stsci.ndimage as ndimage
+import stsci.convolve as conv
 import pyfits
 
 #History:
@@ -78,13 +78,13 @@ class params:
            self.la   = 128
         else:
            print " unknown camera number %d" %(camera)
-        
-    
+
+
 class InputFile:
     """ Stores a collection of keywords and the header for an exposure. """
-    
+
     def __init__(self,imgfile):
-        
+
         # get the input file name and open it
         self.filename = osfn(imgfile)
         f = pyfits.open(self.filename)
@@ -102,7 +102,7 @@ class InputFile:
 
         # load the zeroth-read image for use later
         self.zread = f['sci',self.nsamp].data.astype(N.dtype('float32'))
- 
+
 
 class Readout:
 
@@ -133,16 +133,16 @@ def osfn(filename):
     """Return a filename with iraf syntax and os environment names substituted out"""
     if filename is None:
         return filename
-    
+
     #Baby assumptions: suppose that the env variables will be in front.
-   
+
     if filename.startswith('$'):  #we need to translate a logical
         symbol,rest=filename.split('/',1)
     elif '$' in filename: #we need to fix the iraf syntax
         symbol,rest=filename.split('$',1)
     else:
         return filename
-    newfilename=os.environ[symbol]+'/'+rest    
+    newfilename=os.environ[symbol]+'/'+rest
     return newfilename
 
 #..............................................................................
@@ -159,7 +159,7 @@ def get_totsig (im,la):
     q2 = im.data[ln1:ln2,0:ln1]
     q3 = im.data[ln1:ln2,ln1:ln2]
     q4 = im.data[0:ln1,ln1:ln2]
-   
+
     # transpose axes
     q1 = N.transpose(q1)
     q2 = N.transpose(q2)
@@ -295,4 +295,4 @@ def clean (usr_imgfile, usr_outfile):
     img.f.close()
     img.dark.close()
 
-    return 
+    return

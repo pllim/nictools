@@ -6,14 +6,14 @@ and amp glow components from a NICMOS time dependent dark file.
 
 :author: Christopher Hanley
 
-:dependencies: pytools.fileutil
+:dependencies: stsci.tools.fileutil
 
 """
 
 __docformat__ = 'restructuredtext'
 
 
-from pytools.fileutil import openImage
+from stsci.tools.fileutil import openImage
 
 class darkobject(object):
     def __init__(hdulist):

@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 """
-rnlincor: Module to correct for the countrate-dependent nonlinearity in 
+rnlincor: Module to correct for the countrate-dependent nonlinearity in
           a NICMOS image.
 
 Usage:    Normally used via the STSDAS task rnlincor in the nicmos package.
@@ -8,7 +8,7 @@ Usage:    Normally used via the STSDAS task rnlincor in the nicmos package.
           >>> rnlincor.run('inputfile.fits','outputfile.fits')
           It may also be run from the shell:
           % rnlincor.py infile.fits [outfile.fits] [--nozpcorr]
-          
+
 
 For more information:
           Additional user information, including parameter definitions and more
@@ -29,13 +29,13 @@ from __future__ import division
 __version__="0.8"
 __vdate__="2007-12-14"
 
-from pytools import numerixenv #Temporary NUMERIX environment check 
+from stsci.tools import numerixenv #Temporary NUMERIX environment check
 
 import numpy as N
 import pyfits
-from pytools.fileutil import osfn
-from pytools import irafglob               # 
-from pytools.xyinterp import xyinterp #in pytools
+from stsci.tools.fileutil import osfn
+from stsci.tools import irafglob
+from stsci.tools.xyinterp import xyinterp
 import sys, os, glob, time
 
 
@@ -83,7 +83,7 @@ def getcurve(fname,col1="wavelength",col2="correction",pad=0):
     return wave,corr
 
 
-    
+
 def getrow(photmode,corrname):
     """ Pick out the correction parameters from the proper row of
     the table located in corrname, based on photmode. Return
@@ -109,7 +109,7 @@ class FitsRowObject(object):
     """ Class to facilitate working with single table rows. """
     def __init__(self,fitsrecord):
         for name in fitsrecord.names:
-            val=fitsrecord.field(name)[0] 
+            val=fitsrecord.field(name)[0]
             self.__setattr__(name.lower(),val)
 
     def __repr__(self):
@@ -139,7 +139,7 @@ def check_infile(infile):
 
     #Open the file
     f=pyfits.open(infile)
-    
+
     #Make sure it's not already been done:
     if f[0].header.get('rnlcindone',' ') == 'PERFORMED':
         print "Non-linearity correction already performed on %s"%infile
@@ -160,7 +160,7 @@ def check_infile(infile):
             f.close()
             raise ValueError, """Correction cannot be performed on grism images: %s image detected.
             Task aborting."""%filter
-        
+
     #Construct verbose error messages for required keywords
     modemsg="""Required keyword PHOTMODE not found in %s primary header.
     This keyword is used to select the correct row from the ZPRATTAB
@@ -174,7 +174,7 @@ def check_infile(infile):
     for the bandpass specified in PHOTMODE. The correct value can be
     obtained by consulting the PHOTTAB, which is located in
                         nref$*_pht.fits"""
-    
+
 
     zptmsg="""Required keyword ZPRATTAB not found in %s primary header.
     This keyword is used to apply the zeropoint correction to the
@@ -200,7 +200,7 @@ def check_infile(infile):
             print reqmsg[kwd]%(infile)
             raise e
 
-    
+
 
     #Check multidrizzle status & print warning if necessary
     if f[0].header.has_key('ndrizim'):
@@ -215,7 +215,7 @@ def check_infile(infile):
         ext=1
     else:
         ext=0
-        
+
     return f, ext
 
 def update_data(f,imgext,img,mul):
@@ -223,7 +223,7 @@ def update_data(f,imgext,img,mul):
     f[imgext].data=img
     if len(f) > 1:
         f[imgext+1].data*=mul
- 
+
 def update_header(f,alpha,zpcorr,zpratio=None):
     """Update all the header keywords"""
 
@@ -247,17 +247,17 @@ def rnlincor(infile,outfile,**opt):
     """ The main routine """
     numerixenv.check() #Temporary NUMERIX environment check
     print "rnlincor version: ",__version__
-    
+
     #Translate an option
     zpcorr = not opt['nozpcorr']
-    
+
     #Get the image data
     try:
         f,imgext=check_infile(infile)
     except Exception, e:
         print str(e)
         return
-    
+
     img=f[imgext].data
 
     #Correct it for sky subtraction if necessary
@@ -271,7 +271,7 @@ def rnlincor(infile,outfile,**opt):
     #Get the relevant filenames.
     zpratfile=expandname(f[0].header['zprattab'])
     nlfile=expandname(f[0].header['rnlcortb'])
-    
+
     #Get the correct key into the tables
     photmode=f[0].header['photmode']
     pivlam  =f[0].header['photplam']
@@ -285,7 +285,7 @@ def rnlincor(infile,outfile,**opt):
         You may wish to rerun the task with the 'nozpcorr' option set."""%(zpratfile,photmode.upper())
         f.close()
         return
-    
+
     #Read in the nonlinearity correction
     #Pad the wavelength table by 5 Angstroms on each end to protect
     #against rounding errors and lagging reference file updates.

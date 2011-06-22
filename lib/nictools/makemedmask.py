@@ -7,7 +7,7 @@
   
 import numpy as N
 import pyfits, sys, string, time
-from convolve import boxcar
+from stsci.convolve import boxcar
 from optparse import OptionParser
 import fsutil, opusutil
 
