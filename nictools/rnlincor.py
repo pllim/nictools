@@ -206,7 +206,7 @@ def check_infile(infile):
 
 
     #Check multidrizzle status & print warning if necessary
-    if f[0].header.has_key('ndrizim'):
+    if 'ndrizim' in f[0].header:
         print """WARNING: Detected multidrizzle image, but unable to
         verify image units. Image may be in electrons/s, not DN/s. If so,
         image should be divided by ADCGAIN value before correction.
