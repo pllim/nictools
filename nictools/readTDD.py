@@ -64,7 +64,7 @@ def fromcalfile(filename):
     """
     hdulist = openImage(filename)
     
-    if hdulist[0].header.has_key('TEMPFILE'):
+    if 'TEMPFILE' in hdulist[0].header:
         if tddfile == 'N/A':
             return None
         else:
