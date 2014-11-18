@@ -5,7 +5,7 @@
 # Purpose: routine to create median mask for 'Finesky'
 # History: 03/04/08 - first version
 
-import numpy as N
+import numpy as np
 import pyfits, sys, string, time
 from stsci.convolve import boxcar
 from optparse import OptionParser
@@ -71,7 +71,7 @@ class Makemedmask:
       callist = self.callist
       verbosity = self.verbosity
 
-      blot1 = N.zeros((ASIZE,ASIZE), dtype=N.float64)
+      blot1 = np.zeros((ASIZE,ASIZE), dtype=np.float64)
 
       # open callist and read file names
       cfile = open(callist, 'r')
@@ -98,8 +98,8 @@ class Makemedmask:
          bltfiles.append( bltfile )
          bltfiles[ii] = bltfile
 
-      im_cube = N.zeros((ASIZE, ASIZE, num_files), dtype=N.float64)
-      blot_cube = N.zeros((ASIZE, ASIZE, num_files), dtype=N.float64)
+      im_cube = np.zeros((ASIZE, ASIZE, num_files), dtype=np.float64)
+      blot_cube = np.zeros((ASIZE, ASIZE, num_files), dtype=np.float64)
 
       for kk in range(num_files):
          fh_cal = pyfits.open(calfiles[ kk ])
@@ -108,12 +108,12 @@ class Makemedmask:
          blot_cube[:,:,kk] = fh_blot[0].data
 
    # make mask from blotted images
-      mask_cube = N.zeros((ASIZE, ASIZE, num_files), dtype=N.float64)
+      mask_cube = np.zeros((ASIZE, ASIZE, num_files), dtype=np.float64)
 
       for ii in range(num_files):
-         mm = N.zeros((ASIZE, ASIZE), dtype=N.float64)
+         mm = np.zeros((ASIZE, ASIZE), dtype=np.float64)
          dif_0 = blot_cube[:,:,ii]
-         dif = N.reshape( dif_0,((ASIZE,ASIZE)))
+         dif = np.reshape( dif_0,((ASIZE,ASIZE)))
          ur =  dif > thresh
          mm[ ur ] = 1
 
@@ -122,22 +122,22 @@ class Makemedmask:
          #  ... leaves boundary values unchanged, which is not an option in convolve's boxcar
 
          ur =  mm <> 0.0
-         mm = N.zeros((ASIZE, ASIZE), dtype=N.float64)
+         mm = np.zeros((ASIZE, ASIZE), dtype=np.float64)
          mm[ ur ] = 1
          mask_cube[:,:,ii] = mm
 
    ## make the masked median image
       if (verbosity >=1 ):  print ' Making the masked median image ... '
 
-      maskall= N.zeros((ASIZE, ASIZE), dtype=N.float64)
+      maskall= np.zeros((ASIZE, ASIZE), dtype=np.float64)
 
       for jj in range(ASIZE):
         for kk in range(ASIZE):
            uu = mask_cube[ kk,jj,:] <> 1
            im_sub =  im_cube[kk,jj,uu]
            im_sub_size = im_sub.size
-           im_1d = N.reshape( im_sub, im_sub.size)
-           if ( im_sub_size  > 0 ):  maskall[ kk,jj ]= N.median(im_1d)
+           im_1d = np.reshape( im_sub, im_sub.size)
+           if ( im_sub_size  > 0 ):  maskall[ kk,jj ]= np.median(im_1d)
 
    # get primary header of 1st cal file to copy to output
       fh_cal0 = pyfits.open(calfiles[ 0 ])

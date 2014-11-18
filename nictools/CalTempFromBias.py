@@ -85,8 +85,8 @@ import sys, time
 from optparse import OptionParser
 import tfbutil
 import opusutil
-import numpy as N
-import pyfits
+import numpy as np
+from astropy.io import fits as pyfits
 import stsci.tools
 from stsci.tools import parseinput
 
@@ -268,9 +268,9 @@ class CalTempFromBias:
                opusutil.PrintMsg("F","ERROR "+ str('Unable to open nonlinearity file: ') + str(nonlin_file))
 
                if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                   raw_header.update("TFBDONE", "SKIPPED")
-                   raw_header.update("TFBVER", self.tfb_version)
-                   raw_header.update("TFBDATE", self.tfb_run)
+                   raw_header["TFBDONE"] = "SKIPPED"
+                   raw_header["TFBVER"] = self.tfb_version
+                   raw_header["TFBDATE"] = self.tfb_run
 
                self.nonlin_file = None
                raise IOError,'Unable to open nonlinearity file'
@@ -280,25 +280,25 @@ class CalTempFromBias:
             c1 = fh_nl[ 1 ].data; c2 = fh_nl[ 2 ].data; c3 = fh_nl[ 3 ].data
 
             # do some bad pixel clipping
-            u = N.where((c2 > c2_min)  | (c2 < c2_max))
-            uu = N.where((c2 < c2_min) & (c2 > c2_max))
+            u = np.where((c2 > c2_min)  | (c2 < c2_max))
+            uu = np.where((c2 < c2_min) & (c2 > c2_max))
 
             if len(u[0]) > 0 :
-               c2[u] = N.median(c2[uu])
+               c2[u] = np.median(c2[uu])
 
-            u = N.where((c3 > c3_min) | (c3 < c3_max))
-            uu = N.where((c3 < c3_min) & (c3 > c3_max))
+            u = np.where((c3 > c3_min) | (c3 < c3_max))
+            uu = np.where((c3 < c3_min) & (c3 > c3_max))
 
             if len(u[0]) > 0:
-               c3[u] = N.median(c3[uu])
+               c3[u] = np.median(c3[uu])
 
             if ( nsamp <= 1 ):
                opusutil.PrintMsg("F","ERROR "+ str(' : nsamp <=1, so will not process'))
 
                if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                   raw_header.update("TFBDONE", "SKIPPED")
-                   raw_header.update("TFBVER", self.tfb_version)
-                   raw_header.update("TFBDATE", self.tfb_run)
+                   raw_header["TFBDONE"]="SKIPPED"
+                   raw_header["TFBVER"]= self.tfb_version
+                   raw_header["TFBDATE"] = self.tfb_run
 
                fh_raw.close()
 
@@ -344,7 +344,7 @@ class CalTempFromBias:
 
                 threshold = 10.0  # in DN/s. Every 5 DN/s here is 5*0.203 = 1 DN in the quad median.
 
-                if (N.median(N.ravel(signal)*0.203) > threshold ):
+                if (np.median(np.ravel(signal)*0.203) > threshold ):
                    clean = im0-(signal * 0.203)
 
                 if  (self.noclean == 'True'):
@@ -378,7 +378,7 @@ class CalTempFromBias:
                     winner = 2
 
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                       raw_header.update("TFBDONE", "PERFORMED")
+                       raw_header["TFBDONE"] =  "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
                        print ' The calculated temperature = ' , temp,' and sigma = ', sig
                 elif (force.upper()[0] == "B") : #   [ reg test  1c ]
@@ -387,7 +387,7 @@ class CalTempFromBias:
                     winner = 2
 
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                       raw_header.update("TFBDONE", "PERFORMED")
+                       raw_header["TFBDONE"] = "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
                        print ' The calculated temperature = ' , temp,' and sigma = ', sig
                 elif (force.upper()[0] == "Q") : #   [ reg test 2 ]
@@ -395,7 +395,7 @@ class CalTempFromBias:
                     winner = 3
 
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                       raw_header.update("TFBDONE", "PERFORMED")
+                       raw_header["TFBDONE"] = "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
                        print ' The calculated temperature = ' , temp,' and sigma = ', sig
                 elif (force.upper()[0] == "A") : # auto   #  [   reg test 3 ]
@@ -423,23 +423,23 @@ class CalTempFromBias:
                           print ' The algorithm with the least sigma is blind correction. '
 
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                       raw_header.update("TFBDONE", "PERFORMED")
+                       raw_header["TFBDONE"] = "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
                        print 'The calculated temperature = ' , temp,' and sigma = ', sig
                 else : # invalid selection   #  [  reg test 4 ]
                     opusutil.PrintMsg("F","ERROR "+ str('Invalid force selected : ') + str(force))
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                       raw_header.update("TFBDONE", "SKIPPED")
-                       raw_header.update("TFBVER", self.tfb_version)
-                       raw_header.update("TFBDATE", self.tfb_run)
+                       raw_header["TFBDONE"] = "SKIPPED"
+                       raw_header["TFBVER"] =  self.tfb_version
+                       raw_header["TFBDATE"] = self.tfb_run
                     fh_raw.close()
                     return None, None, None, None, None
             elif (tfbcalc == 'OMIT'):     #  [  reg test 5 ]
                 opusutil.PrintMsg("F","ERROR "+ str('TFBCALC set to omit, so aborting.'))
                 if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                    raw_header.update("TFBDONE", "OMITTED")
-                    raw_header.update("TFBVER", self.tfb_version)
-                    raw_header.update("TFBDATE", self.tfb_run)
+                    raw_header["TFBDONE"] = "OMITTED"
+                    raw_header["TFBVER"] = self.tfb_version
+                    raw_header["TFBDATE"] = self.tfb_run
                 fh_raw.close()
                 return None, None, None, None, None
             else: # tfbcalc not set (user running on old file)
@@ -449,9 +449,9 @@ class CalTempFromBias:
                     opusutil.PrintMsg("F","ERROR "+ str('Because the keyword TFBCALC is not set in the input file and the parameter Force is not set, this run is aborting. If you want to process this file, either set TFBCALC to PERFORM or set Force to an allowed option (not None)'))
 
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                       raw_header.update("TFBDONE", "SKIPPED")
-                       raw_header.update("TFBVER", self.tfb_version)
-                       raw_header.update("TFBDATE", self.tfb_run)
+                       raw_header["TFBDONE"] = "SKIPPED"
+                       raw_header["TFBVER"] = self.tfb_version
+                       raw_header["TFBDATE"] = self.tfb_run
                     fh_raw.close()
                     return None, None, None, None, None
                 elif (force.upper()[0] == "B") :     #  [  reg test 7 ]
@@ -459,7 +459,7 @@ class CalTempFromBias:
 
                     winner = 2
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                       raw_header.update("TFBDONE", "PERFORMED")
+                       raw_header["TFBDONE"] = "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
                        print ' The calculated temperature = ' , temp,' and sigma = ', sig
 
@@ -467,7 +467,7 @@ class CalTempFromBias:
                     [temp, sig ] = do_quietest( camera, quads, verbosity )
                     winner = 3
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                       raw_header.update("TFBDONE", "PERFORMED")
+                       raw_header["TFBDONE"] = "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
                        print ' The calculated temperature = ' , temp,' and sigma = ', sig
                 elif (force.upper()[0] == "A") : # auto   #  [  reg test 9 ]
@@ -498,15 +498,15 @@ class CalTempFromBias:
                     if ( verbosity > 0):
                        print ' The least sigma is ', sig, ' with corresponding temp = ',temp
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                       raw_header.update("TFBDONE", "PERFORMED")
+                       raw_header["TFBDONE"] = "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
                        print ' The calculated temperature = ' , temp,' and sigma = ', sig
                 else : # invalid selection    #  [  reg test 10 ]
                     opusutil.PrintMsg("F","ERROR "+ str(' Invalid selection of force, so aborting.'))
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
-                       raw_header.update("TFBDONE", "SKIPPED")
-                       raw_header.update("TFBVER", self.tfb_version)
-                       raw_header.update("TFBDATE", self.tfb_run)
+                       raw_header["TFBDONE"] = "SKIPPED"
+                       raw_header["TFBVER"] = self.tfb_version
+                       raw_header["TFBDATE"] = self.tfb_run
                     fh_raw.close()
                     return None, None, None, None, None
 
@@ -831,7 +831,7 @@ def quadmean( im, border):
     xsize = im.shape[1]
     ysize = im.shape[0]
 
-    quads = N.zeros((4), dtype=N.float64)
+    quads = np.zeros((4), dtype=np.float64)
 
     if not border:
       border = 0
@@ -845,10 +845,10 @@ def quadmean( im, border):
     y3 = (ysize//2) + border
     y4 = (ysize-1) - border
 
-    quads[0] = N.mean(im[y1:y2+1,x1:x2+1])
-    quads[1] = N.mean(im[y1:y2+1,x3:x4+1])
-    quads[2] = N.mean(im[y3:y4+1,x3:x4+1])
-    quads[3] = N.mean(im[y3:y4+1,x1:x2+1])
+    quads[0] = np.mean(im[y1:y2+1,x1:x2+1])
+    quads[1] = np.mean(im[y1:y2+1,x3:x4+1])
+    quads[2] = np.mean(im[y3:y4+1,x3:x4+1])
+    quads[3] = np.mean(im[y3:y4+1,x1:x2+1])
 
     return  quads
 

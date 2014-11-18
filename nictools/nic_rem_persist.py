@@ -30,7 +30,7 @@
 #             ped file (CALCFILE) is applied to cal file (TARGFILE). This corresponds to TRAC ticket #317.
 #
 from __future__ import division # confidence high
-import pyfits
+from astropy.io import fits as pyfits
 import numpy as N
 import sys, time
 import opusutil
@@ -242,16 +242,16 @@ class NicRemPersist:
               if (verbosity > 0):
                   print ' The fraction of ped file pixels used for the calculation is ', used,', which is below the minimum allowed value of the fraction (', used_lo,').  Therefore no corrected image will be written.'
 
-              fh_targfile[0].header.update( key = 'BEPDONE', value = 'SKIPPED')
+              fh_targfile[0].header["BEPDONE"] = 'SKIPPED'
         else:   # update target file (CAL) with required keywords
               self._applied = _success
 
               fh_targfile[1].data = correct
-              fh_targfile[0].header.update( key = 'BEPSCALE', value = persist)
-              fh_targfile[0].header.update( key = 'BEPFRAC', value = used)
-              fh_targfile[0].header.update( key = 'BEPVALLO', value = self.persist_lo)
-              fh_targfile[0].header.update( key = 'BEPUSELO', value = self.used_lo)
-              fh_targfile[0].header.update( key = 'BEPDONE', value = 'PERFORMED')
+              fh_targfile[0].header["BEPSCALE"]= persist
+              fh_targfile[0].header["BEPFRAC"]=used
+              fh_targfile[0].header["BEPVALLO"]=self.persist_lo
+              fh_targfile[0].header["BEPUSELO"]= self.used_lo
+              fh_targfile[0].header["BEPDONE"]= "PERFORMED"
 
         if fh_calcfile:
            fh_calcfile.close()

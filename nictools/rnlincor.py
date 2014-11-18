@@ -32,10 +32,10 @@ from __future__ import division
 __version__="0.8"
 __vdate__="2007-12-14"
 
-from stsci.tools import numerixenv #Temporary NUMERIX environment check
+#from stsci.tools import numerixenv #Temporary NUMERIX environment check
 
-import numpy as N
-import pyfits
+import numpy as np
+from astropy.io import fits as pyfits
 from stsci.tools.fileutil import osfn
 from stsci.tools import irafglob
 from stsci.tools.xyinterp import xyinterp
@@ -230,17 +230,11 @@ def update_data(f,imgext,img,mul):
 def update_header(f,alpha,zpcorr,zpratio=None):
     """Update all the header keywords"""
 
-    f[0].header.update('RNLCDONE',
-                         'PERFORMED',
-                         'corrected count-rate dependent non-linearity')
-    f[0].header.update('RNLCALPH',
-                         alpha,
-                         'power-law of non-linearity correction')
+    f[0].header["RNLCDONE"] = ('PERFORMED','corrected count-rate dependent non-linearity')
+    f[0].header["RNLCALPH"]= (alpha,'power-law of non-linearity correction')
 
     if not zpcorr:
-        f[0].header.update('RNLCZPRT',
-                           zpratio,
-                           'Ratio to correct data to match PHOTFNU')
+        f[0].header["RNLCZPRT"] =( zpratio, 'Ratio to correct data to match PHOTFNU')
         f[0].header.add_history('%s rnlincorr: no zeropt correction applied'%time.ctime(),after='RNLCZPRT')
 
 #......................................................................
@@ -248,7 +242,7 @@ def update_header(f,alpha,zpcorr,zpratio=None):
 #......................................................................
 def rnlincor(infile,outfile,**opt):
     """ The main routine """
-    numerixenv.check() #Temporary NUMERIX environment check
+    #numerixenv.check() #Temporary NUMERIX environment check
     print "rnlincor version: ",__version__
 
     #Translate an option
@@ -303,7 +297,7 @@ def rnlincor(infile,outfile,**opt):
     inv_alpha = (1.0/alpha) - 1
 
     #Compute the correction
-    mul = N.where(N.not_equal(img,0),abs(img),1)**inv_alpha
+    mul = np.where(np.not_equal(img,0),abs(img),1)**inv_alpha
 
     #Apply zero point correction if requested
     if zpcorr:

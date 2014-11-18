@@ -34,11 +34,11 @@ __vdate__="2010-10-20"
 
 # The above text is duplicated in the __init__ file for the package, since
 #that's where it shows up for the user.
-from stsci.tools import numerixenv #Temporary NUMERIX environment check
 from stsci.tools import fileutil
 import os
+import numpy as np
 import exceptions
-import numpy as N, pyfits
+from astropy.io import fits as pyfits
 from stsci.imagestats import ImageStats as imstat #pyssg lib
 from stsci.imagestats.histogram1d import histogram1d
 import SP_LeastSquares as LeastSquares #Excerpt from Hinsen's Scientific Python
@@ -142,14 +142,14 @@ class Domain:
         with the maximum stddev.
         """
         p1=self.pp[1,:]
-        uu=N.where(p1 < factor*p1[0])
+        uu=np.where(p1 < factor*p1[0])
         if uu[0].size != 0:
             p1[uu]=p1.max()
             self.pp[1,:]=p1
 
     def getmin(self):
-        ubest=N.where(self.pp[1,:] == self.pp[1,:].min())[0][0]
-        umode=N.where(self.pp[2,:] == self.pp[2,:].min())[0][0]
+        ubest=np.where(self.pp[1,:] == self.pp[1,:].min())[0][0]
+        umode=np.where(self.pp[2,:] == self.pp[2,:].min())[0][0]
         return ubest, umode
 
     def writeto(self,filename,clobber=False):
@@ -211,10 +211,10 @@ class Exposure:
             self.dq=f['dq',1].data
             if self.dq is not None:
                 dqmask = 1+16+32+64+128+256 #selected values
-                self.nonsourcemask=N.bitwise_and(self.dq, dqmask+1024) #exclude sources
-                self.nonsourceidx=N.where(self.nonsourcemask == 0)
+                self.nonsourcemask=np.bitwise_and(self.dq, dqmask+1024) #exclude sources
+                self.nonsourceidx=np.where(self.nonsourcemask == 0)
                 self.nonsource=self.data[self.nonsourceidx]
-                self.badpix=N.bitwise_and(self.dq, dqmask)
+                self.badpix=np.bitwise_and(self.dq, dqmask)
             else:
                 self.badpix=None
         except KeyError,e:
@@ -255,12 +255,12 @@ class Exposure:
         sophistication in handling the central row and column"""
 
         #Compute the median for each quadrant independently
-##         m=N.array([imstat(self.data[self.inq1],nclip=0,binwidth=0.01,fields='median').median,
+##         m=np.array([imstat(self.data[self.inq1],nclip=0,binwidth=0.01,fields='median').median,
 ##                           imstat(self.data[self.inq2],nclip=0,binwidth=0.01,fields='median').median,
 ##                           imstat(self.data[self.inq3],nclip=0,binwidth=0.01,fields='median').median,
 ##                           imstat(self.data[self.inq4],nclip=0,binwidth=0.01,fields='median').median])
 
-        m=N.array([median(self.data[self.inq1]),
+        m=np.array([median(self.data[self.inq1]),
                          median(self.data[self.inq2]),
                          median(self.data[self.inq3]),
                          median(self.data[self.inq4])])
@@ -309,10 +309,10 @@ class Exposure:
 
     def getmask(self,dim=256,border=3,writename='mask.dat',clobber=False):
         """Computes a mask to use for pixels to omit"""
-        mask=N.zeros((dim,dim),dtype=N.dtype('float32'))
-        badmask=N.ones((dim,dim),dtype=N.dtype('float32'))
+        mask=np.zeros((dim,dim),dtype=np.dtype('float32'))
+        badmask=np.ones((dim,dim),dtype=np.dtype('float32'))
         if self.badpix is not None:
-            u=N.where(self.badpix != 0)
+            u=np.where(self.badpix != 0)
             mask[u]=1
             badmask[u]=0
         # Always Mask out central "cross" chipgap
@@ -329,7 +329,7 @@ class Exposure:
         return mask,badmask
 
     def apply_mask(self,mask):
-        goodpix=N.where(mask == 0)
+        goodpix=np.where(mask == 0)
         self.masked_data = self.data[goodpix]
 
 
@@ -345,18 +345,18 @@ class Exposure:
 
                 #there's got to be a better way to do this!
                 #Make a mask & fill it all with ones
-                fitmask=N.ones(mask.shape)
+                fitmask=np.ones(mask.shape)
                 #Then make the pixels we want be set to zero
                 fitmask[dom.pixlist]=0
                 #Then set the mask-defined bad pixels to one so we don't use them
                 #(Notice there's no use of "self.badpix" here, wonder why not?)
                 #Ah! It's because self.badpix was already used in *making* that mask. OK.
-                badpix=N.where(mask == 1)
+                badpix=np.where(mask == 1)
                 fitmask[badpix]=1
                 #Finally, choose only those pixels where it's set to zero.
-                umask=N.where(fitmask == 0)
+                umask=np.where(fitmask == 0)
 
-                dom.pp=N.zeros((3,int(dom.range/pars.stepsize)+1),dtype=N.dtype('float32'))
+                dom.pp=np.zeros((3,int(dom.range/pars.stepsize)+1),dtype=np.dtype('float32'))
                 index=0
                 for i in stepval:
                     dif=cal-(acc*i)
@@ -407,7 +407,7 @@ class Exposure:
         else:
             final=self.data.copy()
 
-        saacorr=N.zeros(final.shape,dtype=N.dtype('float32'))
+        saacorr=np.zeros(final.shape,dtype=np.dtype('float32'))
 
         hdom,ldom=self.domains['high'],self.domains['low']
         self.update=1
@@ -452,46 +452,37 @@ class Exposure:
 
         #Describe what was applied
         lastkey='SCNAPPLD'
-        header.update(lastkey,
-                      self.appstring,
-                      'to which domains was SAA cleaning applied',
-                      after='SAACRMAP')
+        header.set(lastkey, self.appstring, 'to which domains was SAA cleaning applied',after='SAACRMAP')
 
 
         #Then work forward from the beginning of the section:
 
         #First put in a comment card as a separator
-        header.add_blank('',before=lastkey)
-        header.add_blank('      / SAA_CLEAN output keywords',before=lastkey)
-        header.add_blank('',before=lastkey)
+        header.add_blank("",before=lastkey)
+        header.add_blank(" / SAA_CLEAN output keywords",before=lastkey)
+        header.add_blank("",before=lastkey)
 
         #Then describe the persistence image:
-        header.update('SAAPERS',
-                      os.path.basename(pars.saaperfile),
-                      'SAA persistence image',
-                      before=lastkey)
+        header.set("SAAPERS",os.path.basename(pars.saaperfile),'SAA persistence image',before=lastkey)
+
         if not pars.readsaaper:
-            header.update('SCNPSCL',
-                          pars.scale,
-                          'scale factor used to construct persistence img',
+            header.set('SCNPSCL',pars.scale,'scale factor used to construct persistence img',
                           before=lastkey)
-            header.update('SCNPMDN',
-                          pars.saaper_median,
+                          
+            header.set('SCNPMDN',pars.saaper_median,
                           'median used in flatfielding persistence image',
                           before=lastkey)
-        header.add_blank('',before=lastkey)
+                          
+        header.add_blank("",before=lastkey)
 
         #Describe the domains
-        header.update('SCNTHRSH',
-                      self.thresh,
+        header.set('SCNTHRSH',self.thresh,
                       'Threshold dividing high & low signal domains',
                       before=lastkey)
-        header.update('SCNHNPIX',
-                      self.domains['high'].npix,
+        header.set('SCNHNPIX',self.domains['high'].npix,
                       'Number of pixels in high signal domain (HSD)',
                       before=lastkey)
-        header.update('SCNLNPIX',
-                      self.domains['low'].npix,
+        header.set('SCNLNPIX',self.domains['low'].npix,
                       'Number of pixels in low signal domain (LSD)',
                       before=lastkey)
         header.add_blank('',before=lastkey)
@@ -503,21 +494,17 @@ class Exposure:
 ##                       before=lastkey)
         for k in self.domains:
             HorL=k[0].upper()
-            header.update('SCN%sCHI2'%HorL,
-                          self.domains[k].chi2,
+            header.set('SCN%sCHI2'%HorL,self.domains[k].chi2,
                           '%sSD chi squared for parabola fit'%HorL,
                      before=lastkey)
-            header.update('SCN%sSCL'%HorL,
-                          self.domains[k].scale,
+            header.set('SCN%sSCL'%HorL,self.domains[k].scale,
                           '%sSD scale factor for min noise'%HorL,
                       before=lastkey)
             bestloc=self.domains[k].bestloc
-            header.update('SCN%sEFFN'%HorL,
-                          self.domains[k].pp[1,bestloc]*self.gainplot,
+            header.set('SCN%sEFFN'%HorL,self.domains[k].pp[1,bestloc]*self.gainplot,
                           '%sSD effective noise at SCNGAIN'%HorL,
                           before=lastkey)
-            header.update('SCN%sNRED'%HorL,
-                          self.domains[k].nr,
+            header.set('SCN%sNRED'%HorL,self.domains[k].nr,
                           '%sSD  noise reduction (percent)'%HorL,
                           before=lastkey)
 ##................................................................
@@ -562,7 +549,7 @@ def writeimage(image, filename, header=None,comment=None,clobber=False):
 #..........................................................................
 # Math functions
 def median(a):
-    return N.sort(a.ravel())[a.size / 2]
+    return np.sort(a.ravel())[a.size / 2]
 
 def parabola_model(coeffs,t):
     r=coeffs[0]*(t-coeffs[1])**2 + coeffs[2]
@@ -579,7 +566,7 @@ def parabola_min(thedata, startguess):
 def gausspoly_eval(coeffs,t):
     z=(t-coeffs[1])/coeffs[2]
     zz=-1*(z**2/2.)
-    r=coeffs[0]*N.exp(zz) + coeffs[3] + coeffs[4]*t + coeffs[5]*t**2
+    r=coeffs[0]*np.exp(zz) + coeffs[3] + coeffs[4]*t + coeffs[5]*t**2
     return r
 
 def gausspoly_model(coeffs,t):
@@ -617,7 +604,7 @@ def thresh_from_gausspoly_fit(saa, parbinwidth=0.5, nclip=3,
     #Compute the histogram
     hnbins=int( (10000+100)/binwidth) + 1
     h=histogram1d(im,hnbins,binwidth,-100)
-    xloc=N.arange(h.nbins)*h.binWidth+h.minValue
+    xloc=np.arange(h.nbins)*h.binWidth+h.minValue
 
     #Select out only the data range we're interested in
     #Take a first guess at the standard deviation
@@ -756,11 +743,11 @@ def make_saaper(imgfile,pars,crthresh=1):
     #Correct for CRs
     if pars.crthresh:
         a=im1.data-(im2.data/pars.scale)
-        u1=N.where(a > pars.crthresh)
+        u1=np.where(a > pars.crthresh)
         saaper[u1]=im2.data[u1]/pars.scale
 
         a=(im2.data/pars.scale) - im1.data
-        u2=N.where(a > pars.crthresh)
+        u2=np.where(a > pars.crthresh)
         saaper[u2]=im1.data[u2]
     if pars.writesaaper and pars.saaperfile:
         hdr = create_saaper_header(im1,im2,saaper)
@@ -833,7 +820,6 @@ def smartopen(fname, mode, clobber=True):
 # The "main" program
 #....................................................................
 def clean(usr_calcfile,usr_targfile,usr_outfile,pars=None):
-    numerixenv.check() #Temporary NUMERIX environment check
     print "Input files: %s %s"%(usr_calcfile,usr_targfile)
     imgfile=osfn(usr_calcfile)
     img=Exposure(imgfile,nickname='sci image')
@@ -892,10 +878,10 @@ def clean(usr_calcfile,usr_targfile,usr_outfile,pars=None):
 
     #Apply threshold *to persistence image*
     img.domains={'high':Domain('high',
-                               N.where(saaper > img.thresh),
+                               np.where(saaper > img.thresh),
                                pars.hirange),
                  'low' :Domain('low',
-                               N.where(saaper <= img.thresh),
+                               np.where(saaper <= img.thresh),
                                pars.lorange)
                  }
 

@@ -6,11 +6,14 @@
 # History: 03/07/08 - first version
 
 from __future__ import division  # confidence high
-import numpy as N
-import pyfits, sys, string, time
+import numpy as np
+from astropy.io import fits as pyfits
+import  sys, string, time
 from stsci.convolve import boxcar
 from optparse import OptionParser
-import fsutil, opusutil, shutil
+from . import fsutil
+from . import opusutil
+import shutil
 
 __version__ = "0.1 (2008 Mar 12)"
 
@@ -75,7 +78,7 @@ class Makemedmask:
 
       num_missing = 0  # number of pixels having no valid value among all images
       num_no_neigh  = 0 # number of pixels having no valid value among all images and having no valid neighboring values
-      blot1 = N.zeros((ASIZE,ASIZE), dtype=N.float64)
+      blot1 = np.zeros((ASIZE,ASIZE), dtype=np.float64)
 
       # open callist and read file names
       cfile = open(callist, 'r')
@@ -102,10 +105,10 @@ class Makemedmask:
          bltfiles.append( bltfile )
          bltfiles[ii] = bltfile
 
-      im_cube = N.zeros((ASIZE, ASIZE, num_files), dtype=N.float64)
-      blot_cube = N.zeros((ASIZE, ASIZE, num_files), dtype=N.float64)
-      none_valid= N.zeros((ASIZE, ASIZE), dtype=N.int8)   # flag for pixels with no valid values
-      no_neigh= N.zeros((ASIZE, ASIZE), dtype=N.int8)   # flag for pixels with no valid neighbors
+      im_cube = np.zeros((ASIZE, ASIZE, num_files), dtype=np.float64)
+      blot_cube = np.zeros((ASIZE, ASIZE, num_files), dtype=np.float64)
+      none_valid= np.zeros((ASIZE, ASIZE), dtype=np.int8)   # flag for pixels with no valid values
+      no_neigh= np.zeros((ASIZE, ASIZE), dtype=np.int8)   # flag for pixels with no valid neighbors
 
       for kk in range(num_files):
          fh_cal = pyfits.open(calfiles[ kk ])
@@ -114,12 +117,12 @@ class Makemedmask:
          blot_cube[:,:,kk] = fh_blot[0].data
 
    # make mask from blotted images
-      mask_cube = N.zeros((ASIZE, ASIZE, num_files), dtype=N.float64)
+      mask_cube = np.zeros((ASIZE, ASIZE, num_files), dtype=np.float64)
 
       for ii in range(num_files):
-         mm = N.zeros((ASIZE, ASIZE), dtype=N.float64)
+         mm = np.zeros((ASIZE, ASIZE), dtype=np.float64)
          dif_0 = blot_cube[:,:,ii]
-         dif = N.reshape( dif_0,((ASIZE,ASIZE)))
+         dif = np.reshape( dif_0,((ASIZE,ASIZE)))
          ur =  dif > thresh
          mm[ ur ] = 1
 
@@ -128,22 +131,22 @@ class Makemedmask:
          #  ... leaves boundary values unchanged, which is not an option in convolve's boxcar
 
          ur =  mm <> 0.0
-         mm = N.zeros((ASIZE, ASIZE), dtype=N.float64)
+         mm = np.zeros((ASIZE, ASIZE), dtype=np.float64)
          mm[ ur ] = 1
          mask_cube[:,:,ii] = mm
 
    # make the masked median image
       if (verbosity >=1 ):  print ' Making the masked median image ... '
 
-      maskall= N.zeros((ASIZE, ASIZE), dtype=N.float64) - 1 # -1 for later validity check
+      maskall= np.zeros((ASIZE, ASIZE), dtype=np.float64) - 1 # -1 for later validity check
       for jj in range(ASIZE):
         for kk in range(ASIZE):
            uu = mask_cube[ kk,jj,:] <> 1
            im_sub =  im_cube[kk,jj,uu]
            im_sub_size = im_sub.size
-           im_1d = N.reshape( im_sub, im_sub.size)
+           im_1d = np.reshape( im_sub, im_sub.size)
            if ( im_sub_size > 0 ):
-               maskall[ kk,jj ]= N.median(im_1d)
+               maskall[ kk,jj ]= np.median(im_1d)
            else:
                num_missing += 1
                none_valid[ kk, jj ] = 1
@@ -171,7 +174,7 @@ class Makemedmask:
                  no_neigh[ kk, jj ] = 1
 
               if med_neigh_size > 0 :
-                 new_maskall[ kk, jj ] = N.mean(med_neigh[ vv ])
+                 new_maskall[ kk, jj ] = np.mean(med_neigh[ vv ])
 
    # loop over pixels to handle pixels having no valid values, by using averages of valid neighboring pixels
       neigh_radii = [ 2,3,100 ]
@@ -198,7 +201,7 @@ class Makemedmask:
                      num_no_neigh += 1
 
                   if med_neigh_size > 0 :
-                     new_maskall[ kk, jj ] = N.mean(med_neigh[ vv ])
+                     new_maskall[ kk, jj ] = np.mean(med_neigh[ vv ])
                      no_neigh[ kk, jj ] =  0 # reset for next iteration
 
    # overwrite maskall invalids with new_maskall neighbor means

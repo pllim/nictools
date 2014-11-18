@@ -3,7 +3,7 @@
 from __future__ import division # confidence high
 import sys
 import time
-import pyfits
+from astropy.io import fits as pyfits
 from optparse import OptionParser
 import os
 
