@@ -41,8 +41,9 @@ Usage example::
 #from Scientific import IterationCountExceededError
 #------------------------------------------------------
 from __future__ import division
-import SP_numpy as N
-import numpy.oldnumeric.linear_algebra as LA
+import numpy as np
+#import numpy.oldnumeric.linear_algebra as LA
+from numpy import linalg as LA
 from SP_FirstDerivatives import DerivVar
 class IterationCountExceededError(ValueError):
     pass
@@ -51,15 +52,15 @@ class IterationCountExceededError(ValueError):
 def _chiSquare(model, parameters, data):
     n_param = len(parameters)
     chi_sq = 0.
-    alpha = N.zeros((n_param, n_param))
+    alpha = np.zeros((n_param, n_param))
     for point in data:
         sigma = 1
         if len(point) == 3:
             sigma = point[2]
         f = model(parameters, point[0])
         chi_sq = chi_sq + ((f-point[1])/sigma)**2
-        d = N.array(f[1])/sigma
-        alpha = alpha + d[:,N.NewAxis]*d
+        d = np.array(f[1])/sigma
+        alpha = alpha + d[:,np.newaxis]*d
     return chi_sq, alpha
 
 def leastSquaresFit(model, parameters, data, max_iterations=None,
@@ -105,14 +106,14 @@ def leastSquaresFit(model, parameters, data, max_iterations=None,
     for param in parameters:
         p = p + (DerivVar(param, i),)
         i = i + 1
-    id = N.identity(n_param)
+    id = np.identity(n_param)
     l = 0.001
     chi_sq, alpha = _chiSquare(model, p, data)
     niter = 0
     itertrace=[p]
     while 1:
-        delta = LA.solve_linear_equations(alpha+l*N.diagonal(alpha)*id,
-                                          -0.5*N.array(chi_sq[1]))
+        delta = LA.solve(alpha+l*np.diagonal(alpha)*id,
+                                          -0.5*np.array(chi_sq[1]))
         next_p = map(lambda a,b: a+b, p, delta)
         next_chi_sq, next_alpha = _chiSquare(model, next_p, data)
         if next_chi_sq > chi_sq:
@@ -136,7 +137,7 @@ def leastSquaresFit(model, parameters, data, max_iterations=None,
 def _polynomialModel(params, t):
     r = 0.0
     for i in range(len(params)):
-        r = r + params[i]*N.power(t, i)
+        r = r + params[i]*np.power(t, i)
     return r
 
 def polynomialLeastSquaresFit(parameters, data):
@@ -165,7 +166,7 @@ def polynomialLeastSquaresFit(parameters, data):
 
 if __name__ == '__main__':
 
-    from Scientific.N import exp
+    from numpy import exp
 
     def f(param, t):
         return param[0]*exp(-param[1]/t)

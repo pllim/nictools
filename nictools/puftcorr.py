@@ -29,16 +29,16 @@ __version__="0.17"
 __vdate__="2007-11-30"
 
 #.....................................................
-from stsci.tools import numerixenv  #Temporary NUMERIX environment check
+#from stsci.tools import numerixenv  #Temporary NUMERIX environment check
 
 #.....................................................
 import os, sys, shutil
 import exceptions
 import math
-import numpy as N
+import numpy as np
 import stsci.ndimage as ndimage
 import stsci.convolve as conv
-import pyfits
+from astropy.io import fits as pyfits
 
 #History:
 # Modified for numpy usage
@@ -104,7 +104,7 @@ class InputFile:
         self.dark = pyfits.open(self.darkname)
 
         # load the zeroth-read image for use later
-        self.zread = f['sci',self.nsamp].data.astype(N.dtype('float32'))
+        self.zread = f['sci',self.nsamp].data.astype(np.dtype('float32'))
 
 
 class Readout:
@@ -112,7 +112,7 @@ class Readout:
     def __init__(self,input,sampnum):
 
         self.imset  = sampnum
-        self.data   = input.f['sci',self.imset].data.astype(N.dtype('float32'))
+        self.data   = input.f['sci',self.imset].data.astype(np.dtype('float32'))
         self.header = input.f['sci',self.imset].header
         self.npix   = self.header['naxis1']
 
@@ -164,16 +164,16 @@ def get_totsig (im,la):
     q4 = im.data[0:ln1,ln1:ln2]
 
     # transpose axes
-    q1 = N.transpose(q1)
-    q2 = N.transpose(q2)
-    q3 = N.transpose(q3)
-    q4 = N.transpose(q4)
+    q1 = np.transpose(q1)
+    q2 = np.transpose(q2)
+    q3 = np.transpose(q3)
+    q4 = np.transpose(q4)
 
     # unravel the 2-d quads into 1-d vectors
-    q1 = N.ravel(q1)
-    q2 = N.ravel(q2)
-    q3 = N.ravel(q3)
-    q4 = N.ravel(q4)
+    q1 = np.ravel(q1)
+    q2 = np.ravel(q2)
+    q3 = np.ravel(q3)
+    q4 = np.ravel(q4)
 
     # compute the total of the signals in all 4 quads,
     # and then reverse the ordering
@@ -182,7 +182,7 @@ def get_totsig (im,la):
 
     # compute the "look ahead" signal vector
     quad_len = ln1 * ln1
-    totsigla = N.zeros((quad_len),dtype=N.dtype('float32'))
+    totsigla = np.zeros((quad_len),dtype=np.dtype('float32'))
     totsigla[0:quad_len-la]  = totsig[la:]
     totsigla[quad_len-la-1:] = totsig[quad_len-la-1:]
 
@@ -200,11 +200,11 @@ def get_corr (im, pars):
 
     # compute staypuft signal for each pixel
     mask = totsig > 40.0
-    p0 = N.fabs(pars.ampscale * mask * totsig)
-    p1 = N.fabs(pars.ampscale * mask * totsigla)
+    p0 = np.fabs(pars.ampscale * mask * totsig)
+    p1 = np.fabs(pars.ampscale * mask * totsigla)
 
-    ekern = N.exp(-N.arange(ln1*pars.tx)/pars.hh)
-    qkern = pars.a1*N.arange(ln1*pars.tx) + pars.a2
+    ekern = np.exp(-np.arange(ln1*pars.tx)/pars.hh)
+    qkern = pars.a1*np.arange(ln1*pars.tx) + pars.a2
 
     e = conv.convolve (p0, ekern, mode=conv.FULL)
     q = conv.convolve (p1, qkern, mode=conv.FULL)
@@ -212,8 +212,8 @@ def get_corr (im, pars):
 
     # transform the correction vector back into a 2-d image quad
     b = b[::-1]
-    b = N.reshape (b, (ln1,ln1))
-    b = N.transpose(b)
+    b = np.reshape (b, (ln1,ln1))
+    b = np.transpose(b)
 
     # replicate the correction into all 4 full image quads
     im.data[0:ln1,0:ln1] = b
@@ -227,7 +227,7 @@ def get_corr (im, pars):
 # The "main" program
 #....................................................................
 def clean (usr_imgfile, usr_outfile):
-    numerixenv.check() #Temporary NUMERIX environment check
+    #numerixenv.check() #Temporary NUMERIX environment check
     print "puftcorr version %s" %__version__
     print "Input file:  %s" %usr_imgfile
     print "Output file: %s" %usr_outfile
@@ -286,10 +286,10 @@ def clean (usr_imgfile, usr_outfile):
 
         # make sure corrected pixel values don't go off the
         # ends of the Int16 data range before writing to output
-        im.data = N.clip(im.data,-32768.0,32767.0)
+        im.data = np.clip(im.data,-32768.0,32767.0)
 
         # write corrected image to output file
-        pyfits.update(outfile,im.data.astype(N.dtype('int16')),
+        pyfits.update(outfile,im.data.astype(np.dtype('int16')),
                       'sci',imset,
                       header=im.header)
 

@@ -61,13 +61,7 @@ no check for this. I.e.::
 but this result is meaningless.
 """
 from __future__ import division
-
-#------------------------------------------------------
-#Original import statements
-#------------------------------------------------------
-#from Scientific import N; Numeric = N
-#------------------------------------------------------
-import SP_numpy as N; Numeric = N
+import numpy as np
 
 # The following class represents variables with derivatives:
 
@@ -221,7 +215,7 @@ class DerivVar:
         val = val1*self.value
         deriv1 = map(lambda x, f=val1*other.value: f*x, self.deriv)
         if isDerivVar(other) and len(other.deriv) > 0:
-            deriv2 = map(lambda x, f=val*Numeric.log(self.value): f*x,
+            deriv2 = map(lambda x, f=val*np.log(self.value): f*x,
                          other.deriv)
             return DerivVar(val, _mapderiv(lambda a,b: a+b, deriv1, deriv2))
         else:
@@ -231,71 +225,71 @@ class DerivVar:
         return pow(other, self)
 
     def exp(self):
-        v = Numeric.exp(self.value)
+        v = np.exp(self.value)
         return DerivVar(v, map(lambda x, f=v: f*x, self.deriv))
 
     def log(self):
-        v = Numeric.log(self.value)
+        v = np.log(self.value)
         d = 1./self.value
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
 
     def log10(self):
-        v = Numeric.log10(self.value)
-        d = 1./(self.value * Numeric.log(10))
+        v = np.log10(self.value)
+        d = 1./(self.value * np.log(10))
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
 
     def sqrt(self):
-        v = Numeric.sqrt(self.value)
+        v = np.sqrt(self.value)
         d = 0.5/v
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
 
     def sign(self):
         if self.value == 0:
             raise ValueError("can't differentiate sign() at zero")
-        return DerivVar(Numeric.sign(self.value), 0)
+        return DerivVar(np.sign(self.value), 0)
 
     def sin(self):
-        v = Numeric.sin(self.value)
-        d = Numeric.cos(self.value)
+        v = np.sin(self.value)
+        d = np.cos(self.value)
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
 
     def cos(self):
-        v = Numeric.cos(self.value)
-        d = -Numeric.sin(self.value)
+        v = np.cos(self.value)
+        d = -np.sin(self.value)
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
 
     def tan(self):
-        v = Numeric.tan(self.value)
+        v = np.tan(self.value)
         d = 1.+pow(v,2)
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
 
     def sinh(self):
-        v = Numeric.sinh(self.value)
-        d = Numeric.cosh(self.value)
+        v = np.sinh(self.value)
+        d = np.cosh(self.value)
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
 
     def cosh(self):
-        v = Numeric.cosh(self.value)
-        d = Numeric.sinh(self.value)
+        v = np.cosh(self.value)
+        d = np.sinh(self.value)
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
 
     def tanh(self):
-        v = Numeric.tanh(self.value)
-        d = 1./pow(Numeric.cosh(self.value),2)
+        v = np.tanh(self.value)
+        d = 1./pow(np.cosh(self.value),2)
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
 
     def arcsin(self):
-        v = Numeric.arcsin(self.value)
-        d = 1./Numeric.sqrt(1.-pow(self.value,2))
+        v = np.arcsin(self.value)
+        d = 1./np.sqrt(1.-pow(self.value,2))
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
 
     def arccos(self):
-        v = Numeric.arccos(self.value)
-        d = -1./Numeric.sqrt(1.-pow(self.value,2))
+        v = np.arccos(self.value)
+        d = -1./np.sqrt(1.-pow(self.value,2))
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
 
     def arctan(self):
-        v = Numeric.arctan(self.value)
+        v = np.arctan(self.value)
         d = 1./(1.+pow(self.value,2))
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
 
@@ -303,13 +297,14 @@ class DerivVar:
         den = self.value*self.value+other.value*other.value
         s = self.value/den
         o = other.value/den
-        return DerivVar(Numeric.arctan2(self.value, other.value),
+        return DerivVar(np.arctan2(self.value, other.value),
                         _mapderiv(lambda a, b: a-b,
                                   map(lambda x, f=o: f*x, self.deriv),
                                   map(lambda x, f=s: f*x, other.deriv)))
 
     def gamma(self):
-        from transcendental import gamma, psi
+        from scipy.special import gamma, psi
+        #from transcendental import gamma, psi
         v = gamma(self.value)
         d = v*psi(self.value)
         return DerivVar(v, map(lambda x, f=d: f*x, self.deriv))
@@ -364,10 +359,10 @@ def DerivVector(x, y, z, index=0):
 
     """
 
-    from Scientific.Geometry.VectorModule import Vector
+    
     if isDerivVar(x) and isDerivVar(y) and isDerivVar(z):
-        return Vector(x, y, z)
+        return np.array([x, y, z])
     else:
-        return Vector(DerivVar(x, index),
-                      DerivVar(y, index+1),
-                      DerivVar(z, index+2))
+        return np.array([DerivVar(x, index),
+                        DerivVar(y, index+1),
+                        DerivVar(z, index+2)])
