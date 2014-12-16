@@ -45,14 +45,6 @@ SP_LeastSquares
    :members:
    :undoc-members:
 
-SP_numpy
---------
-.. currentmodule:: nictools.SP_numpy
-
-.. automodule:: nictools.SP_numpy
-   :members:
-   :undoc-members:
-
 tfbutil
 --------
 .. currentmodule:: nictools.tfbutil
