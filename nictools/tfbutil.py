@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from __future__ import division  # confidence high
+from __future__ import division, print_  # confidence high
 import sys, os
 
 # Utility functions and parameters for temp_from_bias
@@ -26,13 +26,13 @@ nref_par = os.path.expandvars('$nref')
 def all_printMsg( message, level=VERBOSE):
 
     if verbosity >= level:
-      print message
+      print(message)
       sys.stdout.flush()
 
 def printMsg( message, level=QUIET):
 
     if verbosity >= level:
-      print message
+      print(message)
       sys.stdout.flush()
 
 def setVerbosity( verbosity_level):

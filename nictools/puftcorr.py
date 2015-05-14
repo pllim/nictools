@@ -24,6 +24,7 @@ puftcorr: Module for estimating and removing "Mr. Staypuft" signal from
     - ndimage  v2.0 or higher
 
 """
+from __future__ import division, print_function
 #.....................................................
 __version__="0.17"
 __vdate__="2007-11-30"
@@ -80,7 +81,7 @@ class params:
            self.a2   = math.fabs(128.0*self.tx*self.a1)
            self.la   = 128
         else:
-           print " unknown camera number %d" %(camera)
+           print(" unknown camera number %d" %(camera))
 
 
 class InputFile:
@@ -228,9 +229,9 @@ def get_corr (im, pars):
 #....................................................................
 def clean (usr_imgfile, usr_outfile):
     #numerixenv.check() #Temporary NUMERIX environment check
-    print "puftcorr version %s" %__version__
-    print "Input file:  %s" %usr_imgfile
-    print "Output file: %s" %usr_outfile
+    print("puftcorr version %s" %__version__)
+    print("Input file:  %s" %usr_imgfile)
+    print("Output file: %s" %usr_outfile)
 
     imgfile = osfn(usr_imgfile)
     outfile = osfn(usr_outfile)

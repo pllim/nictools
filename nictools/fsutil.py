@@ -5,7 +5,7 @@
 # Purpose: utility functions for 'Finesky'
 # History: 03/12/08 - first version
 
-from __future__ import division  # confidence high
+from __future__ import division, print_function  # confidence high
 import sys
 
 __version__ = "0.1 (2008 Mar 12)"
@@ -30,7 +30,7 @@ def all_printMsg( message, level=VERBOSE):
         verbosity level
     """
     if verbosity >= level:
-      print message
+      print(message)
       sys.stdout.flush()
 
 def printMsg( message, level=QUIET):
@@ -43,7 +43,7 @@ def printMsg( message, level=QUIET):
         verbosity level
     """
     if verbosity >= level:
-        print message
+        print(message)
         sys.stdout.flush()
 
 def setVerbosity( verbosity_level):

@@ -4,12 +4,13 @@
 # Program: makemedmask.py
 # Purpose: routine to create median mask for 'Finesky'
 # History: 03/04/08 - first version
+from __future__ import absolute_import, division, print_function  # confidence high
 
 import numpy as np
 import pyfits, sys, string, time
 from stsci.convolve import boxcar
 from optparse import OptionParser
-import fsutil, opusutil
+from . import fsutil, opusutil
 
 __version__ = "0.1 (2008 Mar 4)"
 
@@ -60,7 +61,7 @@ class Makemedmask:
         self.mm_run = time.asctime()
 
         if (self.verbosity >=1):
-            print ' Makemedmask run on ',self.mm_run, ', using code version: ', self.mm_version
+            print(' Makemedmask run on ',self.mm_run, ', using code version: ', self.mm_version)
 
 
     def makemask( self ):
@@ -86,11 +87,11 @@ class Makemedmask:
 
       bltfiles = [] # list of blot files
 
-      if (verbosity >=1 ):  print 'There are' ,num_files,'cal files. They are : '
+      if (verbosity >=1 ):  print('There are' ,num_files,'cal files. They are : ')
       for ii in range(num_files):
          calfiles[ii].lstrip().rstrip() # strip leading and trailing whitespace
          calfile_prefix = calfiles[ii].split('_')[0]
-         if (verbosity >=1 ): print '  calfiles[',ii,'] = ',calfiles[ii]
+         if (verbosity >=1 ): print('  calfiles[',ii,'] = ',calfiles[ii])
 
       #  associate blt files with cal files
          bltfile =  calfile_prefix+str("_cal_sci1_blt.fits")
@@ -121,19 +122,19 @@ class Makemedmask:
          mm = boxcar( mm,(3,3))  # smooth over 3x3 ; this will differ from IDL's "smooth" which ...
          #  ... leaves boundary values unchanged, which is not an option in convolve's boxcar
 
-         ur =  mm <> 0.0
+         ur =  mm != 0.0
          mm = np.zeros((ASIZE, ASIZE), dtype=np.float64)
          mm[ ur ] = 1
          mask_cube[:,:,ii] = mm
 
    ## make the masked median image
-      if (verbosity >=1 ):  print ' Making the masked median image ... '
+      if (verbosity >=1 ):  print(' Making the masked median image ... ')
 
       maskall= np.zeros((ASIZE, ASIZE), dtype=np.float64)
 
       for jj in range(ASIZE):
         for kk in range(ASIZE):
-           uu = mask_cube[ kk,jj,:] <> 1
+           uu = mask_cube[ kk,jj,:] != 1
            im_sub =  im_cube[kk,jj,uu]
            im_sub_size = im_sub.size
            im_1d = np.reshape( im_sub, im_sub.size)
@@ -145,15 +146,15 @@ class Makemedmask:
 
       write_to_file(maskall, medfile, pr_hdr, verbosity)
 
-      if (verbosity >=1 ):  print 'DONE'
+      if (verbosity >=1 ):  print('DONE')
 
     def print_pars(self):
         """ Print parameters.
         """
-        print 'The input parameters are :'
-        print '  thresh:  ' , self.thresh
-        print '  medfile:  ' , self.medfile
-        print '  callist:  ' , self.callist
+        print('The input parameters are :')
+        print('  thresh:  ' , self.thresh)
+        print('  medfile:  ' , self.medfile)
+        print('  callist:  ' , self.callist)
 
 
 
@@ -177,7 +178,7 @@ def write_to_file(data, filename, hdr, verbosity):
     fimghdu.data = data
     fimg.append(fimghdu)
     fimg.writeto(filename)
-    if (verbosity >=1 ): print '...wrote masked median image to: ',filename
+    if (verbosity >=1 ): print('...wrote masked median image to: ',filename)
 
 
 if __name__=="__main__":
@@ -235,6 +236,6 @@ if __name__=="__main__":
 
        del m_mask
 
-     except Exception, errmess:
+     except Exception as errmess:
        opusutil.PrintMsg("F","FATAL ERROR "+ str(errmess))
        sys.exit( ERROR_RETURN)
