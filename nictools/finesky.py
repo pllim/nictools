@@ -5,7 +5,7 @@
 # Purpose: routine to create median mask
 # History: 03/07/08 - first version
 
-from __future__ import division  # confidence high
+from __future__ import absolute_import, division, print_function  # confidence high
 import numpy as np
 from astropy.io import fits as pyfits
 import  sys, string, time
@@ -65,7 +65,7 @@ class Makemedmask:
         self.mm_run = time.asctime()
 
         if (self.verbosity >=1):
-            print ' Finesky run on ',self.mm_run, ', using code version: ', self.mm_version
+            print(' Finesky run on ',self.mm_run, ', using code version: ', self.mm_version)
 
 
     def makemask( self ):
@@ -93,11 +93,11 @@ class Makemedmask:
 
       bltfiles = [] # list of blot files
 
-      if (verbosity >=1 ):  print 'There are' ,num_files,'cal files. They are : '
+      if (verbosity >=1 ):  print('There are' ,num_files,'cal files. They are : ')
       for ii in range(num_files):
          calfiles[ii].lstrip().rstrip() # strip leading and trailing whitespace
          calfile_prefix = calfiles[ii].split('_')[0]
-         if (verbosity >=1 ): print '  calfiles[',ii,'] = ',calfiles[ii]
+         if (verbosity >=1 ): print('  calfiles[',ii,'] = ',calfiles[ii])
 
       #  associate blt files with cal files
          bltfile =  calfile_prefix+str("_cal_sci1_blt.fits")
@@ -130,18 +130,18 @@ class Makemedmask:
          mm = boxcar( mm,(3,3))  # smooth over 3x3 ; this will differ from IDL's "smooth" which ...
          #  ... leaves boundary values unchanged, which is not an option in convolve's boxcar
 
-         ur =  mm <> 0.0
+         ur =  mm != 0.0
          mm = np.zeros((ASIZE, ASIZE), dtype=np.float64)
          mm[ ur ] = 1
          mask_cube[:,:,ii] = mm
 
    # make the masked median image
-      if (verbosity >=1 ):  print ' Making the masked median image ... '
+      if (verbosity >=1 ):  print(' Making the masked median image ... ')
 
       maskall= np.zeros((ASIZE, ASIZE), dtype=np.float64) - 1 # -1 for later validity check
       for jj in range(ASIZE):
         for kk in range(ASIZE):
-           uu = mask_cube[ kk,jj,:] <> 1
+           uu = mask_cube[ kk,jj,:] != 1
            im_sub =  im_cube[kk,jj,uu]
            im_sub_size = im_sub.size
            im_1d = np.reshape( im_sub, im_sub.size)
@@ -165,7 +165,7 @@ class Makemedmask:
               # select only neighbors that are valid and not the center pixel (because non_valid flagged)
               vv = (med_neigh > -HUGE_VAL)
               vv = True and ( med_neigh < HUGE_VAL )
-              vv = True and ( med_neigh <> -1 )
+              vv = True and ( med_neigh != -1 )
 
               med_neigh_size = med_neigh[ vv ].size
 
@@ -193,7 +193,7 @@ class Makemedmask:
                   # select only neighbors that are valid and not the center pixel
                   vv = (med_neigh > -HUGE_VAL)
                   vv = True and ( med_neigh < HUGE_VAL )
-                  vv = True and ( med_neigh <> -1 )
+                  vv = True and ( med_neigh != -1 )
 
                   med_neigh_size = med_neigh[ vv ].size
 
@@ -215,23 +215,23 @@ class Makemedmask:
       write_to_file(maskall, medfile, pr_hdr, verbosity)
 
       if num_missing > MAX_NUM_MISSING:
-         print '  '
-         print '********************************************************************************'
-         print 'WARNING : The number of pixels having no valid values among all images is ', num_missing,','
-         print ' which exceeds the specified threshold of ', MAX_NUM_MISSING,' pixels.'
-         print '********************************************************************************'
-         print '  '
+         print('  ')
+         print('********************************************************************************')
+         print('WARNING : The number of pixels having no valid values among all images is ', num_missing,',')
+         print(' which exceeds the specified threshold of ', MAX_NUM_MISSING,' pixels.')
+         print('********************************************************************************')
+         print('  ')
 
       if (verbosity >=1 ):
-          print 'The number of pixels having no valid values among all images is ', num_missing
-          print 'Because they have no valid values, these pixels could not have their medians calculated,'
-          print 'so instead of a median value an attempt was made to calculate an average of valid neighboring '
-          print 'values. The number of these pixels that were replaced by an average of their neighbors is ', num_missing-num_no_neigh
+          print('The number of pixels having no valid values among all images is ', num_missing)
+          print('Because they have no valid values, these pixels could not have their medians calculated,')
+          print('so instead of a median value an attempt was made to calculate an average of valid neighboring ')
+          print('values. The number of these pixels that were replaced by an average of their neighbors is ', num_missing-num_no_neigh)
 
 
    # subtract counts in med image (maskall) from SCI ext in each cal file, output to cal2 file
       if (verbosity >=1 ):
-          print 'Subtracting sky median image from SCI ext for the cal files: '
+          print('Subtracting sky median image from SCI ext for the cal files: ')
       for ii in range(num_files):
           fh_cal = pyfits.open(calfiles[ ii ])
           cal_data =  fh_cal[1].data
@@ -245,18 +245,18 @@ class Makemedmask:
           fh_new_cal[1].data -= maskall
           fh_new_cal.close()
           if (verbosity >=1 ):
-             print '  Writing new cal file: ',new_cal_filename
+             print('  Writing new cal file: ',new_cal_filename)
       if (verbosity >=1 ):
-          print 'Done subtracting sky median image from SCI ext for the cal files. '
-          print 'DONE'
+          print('Done subtracting sky median image from SCI ext for the cal files. ')
+          print('DONE')
 
     def print_pars(self):
         """ Print parameters.
         """
-        print 'The input parameters are :'
-        print '  thresh:  ' , self.thresh
-        print '  medfile:  ' , self.medfile
-        print '  callist:  ' , self.callist
+        print('The input parameters are :')
+        print('  thresh:  ' , self.thresh)
+        print('  medfile:  ' , self.medfile)
+        print('  callist:  ' , self.callist)
 
 
 
@@ -280,7 +280,7 @@ def write_to_file(data, filename, hdr, verbosity):
     fimghdu.data = data
     fimg.append(fimghdu)
     fimg.writeto(filename)
-    if (verbosity >=1 ): print '...wrote masked median image to: ',filename
+    if (verbosity >=1 ): print('...wrote masked median image to: ',filename)
 
 
 if __name__=="__main__":
@@ -339,6 +339,6 @@ if __name__=="__main__":
 
        del m_mask
 
-     except Exception, errmess:
+     except Exception as errmess:
        opusutil.PrintMsg("F","FATAL ERROR "+ str(errmess))
        sys.exit( ERROR_RETURN)

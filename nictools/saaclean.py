@@ -27,7 +27,7 @@ saaclean: Module for estimating and removing persistent CR signal due to a prior
 
 """
 
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 
 __version__="1.4"
 __vdate__="2010-10-20"
@@ -41,7 +41,7 @@ import exceptions
 from astropy.io import fits as pyfits
 from stsci.imagestats import ImageStats as imstat #pyssg lib
 from stsci.imagestats.histogram1d import histogram1d
-import SP_LeastSquares as LeastSquares #Excerpt from Hinsen's Scientific Python
+from . import SP_LeastSquares as LeastSquares #Excerpt from Hinsen's Scientific Python
 from numpy.linalg import LinAlgError
 
 #History:
@@ -155,11 +155,11 @@ class Domain:
     def writeto(self,filename,clobber=False):
         if not clobber:
             if os.path.exists(filename):
-                raise IOError, "%s already exists: aborting\n"%filename
+                raise IOError("%s already exists: aborting\n"%filename)
         #if clobber=True or file does not exist, proceed anyhow
         f=open(filename,'w')
         f.write('# '+self.name+'\n')
-        f.write('# Pixels in this domain: '+`len(self.pixlist[0])`+'\n')
+        f.write('# Pixels in this domain: '+str(len(self.pixlist[0]))+'\n')
         f.write('#  1  scale factor  \n')
         f.write('#  2  sigma   \n')
         f.write('#  3  mode  \n')
@@ -206,7 +206,7 @@ class Exposure:
         self.q4=slice(0,128),slice(128,256)
 
 
-        print self.nickname, ": using DQ extension for badpix"
+        print(self.nickname, ": using DQ extension for badpix")
         try:
             self.dq=f['dq',1].data
             if self.dq is not None:
@@ -217,24 +217,24 @@ class Exposure:
                 self.badpix=np.bitwise_and(self.dq, dqmask)
             else:
                 self.badpix=None
-        except KeyError,e:
-            print e
-            print 'DQ extension not found for %s'%imgfile
-            print 'defaulting to maskfile'
+        except KeyError as e:
+            print(e)
+            print('DQ extension not found for %s'%imgfile)
+            print('defaulting to maskfile')
             self.badpix = None
 
  #       print "self.badpix.shape = ",self.badpix.shape
 
         if self.badpix is None:
-            print "failing over to ",self.badfile
+            print("failing over to ",self.badfile)
             try:
                 f2=pyfits.open(self.badfile)
                 self.badpix=f2['dq',1].data
                 f2.close()
-            except IOError,e:
-                print e
-                print "Bad pixel image not read"
-                print "Bad pixel image filename obtained from ",self.filename
+            except IOError as e:
+                print(e)
+                print("Bad pixel image not read")
+                print("Bad pixel image filename obtained from ",self.filename)
                 self.badpix=None
 
         #Don't leave file handles hanging around
@@ -288,7 +288,7 @@ class Exposure:
                          nclip=1,binwidth=0.01,fields='midpt')
             self.data[127,:]=self.data[127,:]-temp.midpt
         else:
-            raise ValueError, "Bad camera value"
+            raise ValueError("Bad camera value")
 
 ##...................................................................................
 ## Original code that I think is wrong:
@@ -341,7 +341,7 @@ class Exposure:
         for dom in self.domains.values():
             try:
                 sz1=int(dom.range/pars.stepsize)+1
-                stepval=[pars.stepsize*i for i in xrange(sz1)]
+                stepval=[pars.stepsize*i for i in range(sz1)]
 
                 #there's got to be a better way to do this!
                 #Make a mask & fill it all with ones
@@ -369,7 +369,7 @@ class Exposure:
                 ubest,umode=dom.getmin()
                 best=dom.pp[0,ubest]
 
-                print "\nResults summary for %s domain:"%dom.name
+                print("\nResults summary for %s domain:"%dom.name)
                 if pars.dofit:
                     minx=max(ubest-5,0)
                     maxx=min(ubest+5,len(dom.pp[0])-1)
@@ -384,18 +384,18 @@ class Exposure:
                 dom.bestloc=ubest
 
 
-                #print "   zero-mode scale factor is       : ",dom.pp[0,umode]
-                print "   min-noise (best) scale factor is: ",dom.scale
-                print "   effective noise at this factor (electrons at gain %f): %f"%(self.gainplot,dom.pp[1,ubest]*self.gainplot)
-                print "   noise reduction (percent)       : ",dom.nr
+                #print("   zero-mode scale factor is       : ",dom.pp[0,umode])
+                print("   min-noise (best) scale factor is: ",dom.scale)
+                print("   effective noise at this factor (electrons at gain %f): %f"%(self.gainplot,dom.pp[1,ubest]*self.gainplot))
+                print("   noise reduction (percent)       : ",dom.nr)
 
                 #Apply a sensibility check
                 if dom.scale < 0:
-                    raise NegScaleError, "ERROR: Best scale factor for %s domain is negative"%dom.name
-            except ValueError,e:
-                print "Error calculating scale for %s domain"%dom.name
-                print str(e)
-                print "No correction can be calculated for this domain"
+                    raise NegScaleError("ERROR: Best scale factor for %s domain is negative"%dom.name)
+            except ValueError as e:
+                print("Error calculating scale for %s domain"%dom.name)
+                print(str(e))
+                print("No correction can be calculated for this domain")
                 dom.nr = 0
                 dom.scale = 0
                 dom.bestloc=0
@@ -412,27 +412,27 @@ class Exposure:
         hdom,ldom=self.domains['high'],self.domains['low']
         self.update=1
         if hdom.nr >= noisethresh and ldom.nr >= noisethresh:
-            print "\n Applying noise reduction in both domains "
+            print("\n Applying noise reduction in both domains ")
             self.appstring='both'
             saacorr[ldom.pixlist]=saaper[ldom.pixlist]*(ldom.scale*badmask[ldom.pixlist])
             saacorr[hdom.pixlist]=saaper[hdom.pixlist]*(hdom.scale*badmask[hdom.pixlist])
 
         elif hdom.nr > noisethresh and ldom.nr < noisethresh:
-            print "\n Applying noise reduction in high domain only "
+            print("\n Applying noise reduction in high domain only ")
             self.appstring='high only'
             saacorr[hdom.pixlist]=saaper[hdom.pixlist]*(hdom.scale*badmask[hdom.pixlist])
 
         elif hdom.nr < noisethresh and ldom.nr >= noisethresh:
-            print "\n...Noise reduction in high domain < 1%: applying low scale everywhere"
+            print("\n...Noise reduction in high domain < 1%: applying low scale everywhere")
             self.appstring='low everywhere'
             saacorr=saaper*(ldom.scale*badmask)
 
         elif hdom.nr < noisethresh and ldom.nr < noisethresh:
-            print "\n*** Noise reduction < 1 %, not applying"
+            print("\n*** Noise reduction < 1 %, not applying")
             self.appstring='none'
             self.update=0
         else:
-            raise ValueError,"Huh?? hi_nr, lo_nr: %f %f"%(hdom.nr,ldom.nr)
+            raise ValueError("Huh?? hi_nr, lo_nr: %f %f"%(hdom.nr,ldom.nr))
 
         if self.appstring != 'none':
             final=final-saacorr
@@ -559,7 +559,7 @@ def parabola_min(thedata, startguess):
     #We may not need to rescale the data
     guesscoeff=(100,startguess,0.1)
     fitcoeff,chi2,itertrace=LeastSquares.leastSquaresFit(parabola_model,guesscoeff,thedata)
-    print "chi2 for parabola fit = ",chi2
+    print("chi2 for parabola fit = ",chi2)
     return fitcoeff[1],chi2,itertrace
 #............................................................................
 #Functions for gauss-poly fitting of the persistence image histogram
@@ -631,7 +631,7 @@ def thresh_from_gausspoly_fit(saa, parbinwidth=0.5, nclip=3,
     #Do the fitting: with a catch for a linear algebra failure
     try:
         coeffs,chi2,itertrace=gausspoly_fit(thedata,startguess)
-    except LinAlgError, e:
+    except LinAlgError as e:
         if diagfile is None:
             diagfile='diag_linalgerr'
         f=smartopen(diagfile+'_gp_hist.txt','w',clobber=clobber)
@@ -642,14 +642,14 @@ def thresh_from_gausspoly_fit(saa, parbinwidth=0.5, nclip=3,
         raise e
 
     #and tell us about the results
-    print "\nCoefficients for gauss-poly fit to persistence model histogram:"
+    print("\nCoefficients for gauss-poly fit to persistence model histogram:")
     r=itertrace[-1] #Last iteration
 
-    print "Gaussian (low signal component) terms:"
-    print "  Amplitude, Mean, Sigma: %f %f %f"%(r[0].value,r[1].value,r[2].value)
-    print "Polynomial terms:"
-    print "  Constant, Linear, Quadratic:%f %f %f"%(r[3].value,r[4].value,r[5].value)
-    print""
+    print("Gaussian (low signal component) terms:")
+    print("  Amplitude, Mean, Sigma: %f %f %f"%(r[0].value,r[1].value,r[2].value))
+    print("Polynomial terms:")
+    print("  Constant, Linear, Quadratic:%f %f %f"%(r[3].value,r[4].value,r[5].value))
+    print("")
 
     if diagfile:
 
@@ -693,8 +693,8 @@ def get_postsaa_darks(imgfile):
     saa_asn=h['saa_dark']
     f.close()
     if saa_asn == 'N/A':
-        raise NoPersistError, """This data was not taken in an SAA-impacted orbit.
-        No correction needed. Exiting."""
+        raise NoPersistError("""This data was not taken in an SAA-impacted orbit.
+        No correction needed. Exiting.""")
     else:
         #Get the files out of that set
         saa_files=[]
@@ -802,7 +802,7 @@ def flat_saaper(saaper,img):
 ##             flatname=iraf.osfn(prefix+'$')+root
         flat=Exposure(flatname,nickname='flatfile')
 
-        print "median used in flatfielding: ",mm
+        print("median used in flatfielding: ",mm)
         saaper=((saaper-mm)*flat.data) + mm
     return saaper,mm
 
@@ -811,7 +811,7 @@ def smartopen(fname, mode, clobber=True):
     """ Allows specifying a clobber behavior """
     if mode.startswith('w') and not clobber:
         if os.path.isfile(fname):
-            raise IOError, "%s already exists"%fname
+            raise IOError("%s already exists"%fname)
 
     handle=open(fname,mode)
     return handle
@@ -820,7 +820,7 @@ def smartopen(fname, mode, clobber=True):
 # The "main" program
 #....................................................................
 def clean(usr_calcfile,usr_targfile,usr_outfile,pars=None):
-    print "Input files: %s %s"%(usr_calcfile,usr_targfile)
+    print("Input files: %s %s"%(usr_calcfile,usr_targfile))
     imgfile=osfn(usr_calcfile)
     img=Exposure(imgfile,nickname='sci image')
     targfile=osfn(usr_targfile)
@@ -840,7 +840,7 @@ def clean(usr_calcfile,usr_targfile,usr_outfile,pars=None):
     for check in [targ,img]:
         scnappld=check.h.get('scnappld',None)
         if scnappld in already_done:
-            raise AlreadyDone, check.filename
+            raise AlreadyDone(check.filename)
 
     outfile=osfn(usr_outfile)
     if pars is None:
@@ -851,7 +851,7 @@ def clean(usr_calcfile,usr_targfile,usr_outfile,pars=None):
         sfile.close()
     else:
         saaper=make_saaper(imgfile,pars)
-        print "Using scale factor of ",pars.scale," to construct persistence image"
+        print("Using scale factor of ",pars.scale," to construct persistence image")
 
 
     mask,badmask=img.getmask(writename=pars.maskfile,clobber=pars.clobber)
@@ -874,7 +874,7 @@ def clean(usr_calcfile,usr_targfile,usr_outfile,pars=None):
         img.thresh=pars.thresh
 
 
-    print "Threshold for hi/lo: ",img.thresh
+    print("Threshold for hi/lo: ",img.thresh)
 
     #Apply threshold *to persistence image*
     img.domains={'high':Domain('high',
@@ -886,13 +886,13 @@ def clean(usr_calcfile,usr_targfile,usr_outfile,pars=None):
                  }
 
 
-    print "Npixels hi/lo: ",len(img.domains['high'].pixlist[0]),len(img.domains['low'].pixlist[0])
+    print("Npixels hi/lo: ",len(img.domains['high'].pixlist[0]),len(img.domains['low'].pixlist[0]))
 
     #Do some checking for sensible results
 ##     if (img.domains['high'].npix == 0):
 ##         raise BadThreshError,"ERROR: Zero pixels found in high signal domain."
     if (img.domains['high'].npix > img.domains['low'].npix):
-        raise BadThreshError,"ERROR: Number of high domain pixels exceeds the number of low domain pixels"
+        raise BadThreshError("ERROR: Number of high domain pixels exceeds the number of low domain pixels")
     img.getscales(saaper,mask,pars)
 
     final=img.apply_domains(saaper,badmask,pars.noisethresh,appimage=appimage)

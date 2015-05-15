@@ -29,13 +29,12 @@
 #  01/15/09 - Changing interface so that ped file and cal file are input, and correction based on calculation of
 #             ped file (CALCFILE) is applied to cal file (TARGFILE). This corresponds to TRAC ticket #317.
 #
-from __future__ import division # confidence high
+from __future__ import absolute_import, division, print_function  # confidence high
 from astropy.io import fits as pyfits
 import numpy as N
 import sys, time
-import opusutil
-import persutil
-import string
+from . import opusutil
+from . import persutil
 import stsci.ndimage as ndimage    # for median_filter
 
 __version__ = "1.6 (2009 Mar 26)"
@@ -99,7 +98,7 @@ class NicRemPersist:
 
         if (verbosity > 0 ):
             current_time = time.asctime()
-            print '=== BEP', __version__,' starting at ', current_time
+            print('=== BEP', __version__,' starting at ', current_time)
 
         # get parameter values if not specified on command line
         if (persist_lo == None ):
@@ -227,20 +226,20 @@ class NicRemPersist:
         correct = targimage - delta[1]*ps  # remove the least-squares fraction of the persistence image from the cal file image
 
         if (verbosity > 1):
-              print ' sky =', sky, ' persist = ' , persist,' used =',used
+              print(' sky =', sky, ' persist = ' , persist,' used =',used)
 
     #     write correction if fraction of pixels used and calculated persistence exceed thresholds
         if ( persist < self.persist_lo ):
               self._applied = _none
 
               if (verbosity > 0):
-                  print ' The calculated persistence for this file is ', persist,', which is below the minimum allowed value of the persistence (', persist_lo,').  Therefore no corrected image will be written.'
+                  print(' The calculated persistence for this file is ', persist,', which is below the minimum allowed value of the persistence (', persist_lo,').  Therefore no corrected image will be written.')
 
         elif ( used < self.used_lo ):
               self._applied = _none
 
               if (verbosity > 0):
-                  print ' The fraction of ped file pixels used for the calculation is ', used,', which is below the minimum allowed value of the fraction (', used_lo,').  Therefore no corrected image will be written.'
+                  print(' The fraction of ped file pixels used for the calculation is ', used,', which is below the minimum allowed value of the fraction (', used_lo,').  Therefore no corrected image will be written.')
 
               fh_targfile[0].header["BEPDONE"] = 'SKIPPED'
         else:   # update target file (CAL) with required keywords
@@ -262,7 +261,7 @@ class NicRemPersist:
         if (verbosity > 0 ):
            self.print_pars()
            current_time = time.asctime()
-           print '=== BEP finished at ', current_time
+           print('=== BEP finished at ', current_time)
 
         if (self.run_stdout  != None):  #reset stdout if needed
            sys.stdout = self.orig_stdout
@@ -274,17 +273,17 @@ class NicRemPersist:
     def print_pars(self ):
         """ Print input parameters and calculated values.
         """
-        print 'The input parameters used are :'
-        print '  The PED input file:  ' , self.calcfile
-        print '  The CAL input file:  ' , self.targfile
-        print '  Lower limit on persistence (persist_lo):  ' , self.persist_lo
-        print '  Lower limit on fraction of pixels used (used_lo):  ' , self.used_lo
-        print '  The (medianed) persistence model from the file (persist_model):  ' , self.persist_model
-        print '  The mask from the file (persist_mask): ' ,self.persist_mask
-        print 'The calculated values are :'
-        print '  The persistence :  ' , self.persist
-        print '  The sky :  ' , self.sky
-        print '  The fraction of pixels used :  ' , self.used
+        print('The input parameters used are :')
+        print('  The PED input file:  ' , self.calcfile)
+        print('  The CAL input file:  ' , self.targfile)
+        print('  Lower limit on persistence (persist_lo):  ' , self.persist_lo)
+        print('  Lower limit on fraction of pixels used (used_lo):  ' , self.used_lo)
+        print('  The (medianed) persistence model from the file (persist_model):  ' , self.persist_model)
+        print('  The mask from the file (persist_mask): ' ,self.persist_mask)
+        print('The calculated values are :')
+        print('  The persistence :  ' , self.persist)
+        print('  The sky :  ' , self.sky)
+        print('  The fraction of pixels used :  ' , self.used)
 
 
 def check_py_pars(self, calcfile, targfile, persist_lo, used_lo, persist_model, persist_mask):
@@ -337,29 +336,35 @@ def check_py_pars(self, calcfile, targfile, persist_lo, used_lo, persist_model, 
 
        if (persist_lo == None):
             persist_lo = persutil.persist_lo
-            print ' You have not been specified a value for persist_lo; the default is:', persutil.persist_lo
-            print ' If you want to use the default, hit <enter>, otherwise type in the desired value'
-            inp = raw_input('? ')
+            print(' You have not been specified a value for persist_lo; the default is:', persutil.persist_lo)
+            print(' If you want to use the default, hit <enter>, otherwise type in the desired value')
+            if sys.version_info[0] >= 3:
+                inp = input('? ')
+            else:
+                inp = raw_input('? ')
             if inp == '':
-               print ' The default value of ', persist_lo,' will be used'
+               print(' The default value of ', persist_lo,' will be used')
             else:
                try:
-                   persist_lo = string.atof(inp)
+                   persist_lo = float(inp)
                except:
-                   print ' The value entered (',inp,') is invalid so the default will be used'
+                   print(' The value entered (',inp,') is invalid so the default will be used')
 
        if (used_lo == None):
             used_lo = persutil.used_lo
-            print ' You have not been specified a value for used_lo; the default is:', persutil.used_lo
-            print ' If you want to use the default, hit <enter>, otherwise type in the desired value'
-            inp = raw_input('? ')
+            print(' You have not been specified a value for used_lo; the default is:', persutil.used_lo)
+            print(' If you want to use the default, hit <enter>, otherwise type in the desired value')
+            if sys.version_info[0] >= 3:
+                inp = input('? ')
+            else:
+                inp = raw_input('? ')
             if inp == '':
-               print ' The default value of ', used_lo,' will be used'
+               print(' The default value of ', used_lo,' will be used')
             else:
                try:
-                   used_lo = string.atof(inp)
+                   used_lo = float(inp)
                except:
-                   print ' The value entered (',inp,') is invalid so the default will be used'
+                   print(' The value entered (',inp,') is invalid so the default will be used')
 
        if ( persist_model == None): # try getting PMODFILE from input file
            try:
@@ -416,18 +421,18 @@ def check_cl_pars(calcfile, targfile, persist_lo, used_lo):
 
    try:
        if (type( persist_lo ) == str):
-          persist_lo = string.atof(persist_lo)
+          persist_lo = float(persist_lo)
    except:
-       print ' The persist_lo value entered (',persist_lo,') is invalid. Try again'
+       print(' The persist_lo value entered (',persist_lo,') is invalid. Try again')
        #self._applied = _error
 
        sys.exit( ERROR_RETURN)
 
    try:
        if (type( used_lo ) == str):
-          used_lo = string.atof(used_lo)
+          used_lo = float(used_lo)
    except:
-       print ' The used_lo value entered (',used_lo,') is invalid. Try again'
+       print(' The used_lo value entered (',used_lo,') is invalid. Try again')
        #self._applied = _error
 
        sys.exit( ERROR_RETURN)
@@ -563,6 +568,6 @@ if __name__=="__main__":
             nrp_stat = nrp.persist()
 
             del nrp
-        except Exception, errmess:
+        except Exception as errmess:
             opusutil.PrintMsg("F","ERROR "+ str(errmess))
             sys.exit( ERROR_RETURN)

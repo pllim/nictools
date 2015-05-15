@@ -27,7 +27,7 @@ rnlincor: Module to correct for the countrate-dependent nonlinearity in
     - pyfits v1.1b4 or higher
 
 """
-from __future__ import division
+from __future__ import division, print_function
 
 __version__="0.8"
 __vdate__="2007-12-14"
@@ -103,7 +103,7 @@ def getrow(photmode,corrname):
         row=FitsRowObject(t[idx])
         return row
     except KeyError:
-        print "No match found for %s %s in %s"%(camera,filter,corrname)
+        print("No match found for %s %s in %s"%(camera,filter,corrname))
         raise KeyError
 
 
@@ -128,7 +128,7 @@ def expandname(pattern):
     try:
         return flist[-1]
     except IndexError:
-        raise IOError,"%s file not found"%pattern
+        raise IOError("%s file not found"%pattern)
 
 
 #......................................................................
@@ -145,7 +145,7 @@ def check_infile(infile):
 
     #Make sure it's not already been done:
     if f[0].header.get('rnlcindone',' ') == 'PERFORMED':
-        print "Non-linearity correction already performed on %s"%infile
+        print("Non-linearity correction already performed on %s"%infile)
         f.close()
         return()
 
@@ -153,16 +153,16 @@ def check_infile(infile):
     imgtype=f[0].header.get('imagetyp','').lower()
     if imgtype not in ['ext','object','target']:
 
-        print """
+        print("""
         WARNING, this is not a science image: this is a %s image.
-        This task is intended to run only on science images. Continuing anyway.\n"""%imgtype.upper()
+        This task is intended to run only on science images. Continuing anyway.\n"""%imgtype.upper())
 
     else: #exclude grism images
         filter=f[0].header.get('filter','').lower()
         if filter.startswith('g'):
             f.close()
-            raise ValueError, """Correction cannot be performed on grism images: %s image detected.
-            Task aborting."""%filter
+            raise ValueError("""Correction cannot be performed on grism images: %s image detected.
+            Task aborting."""%filter)
 
     #Construct verbose error messages for required keywords
     modemsg="""Required keyword PHOTMODE not found in %s primary header.
@@ -199,18 +199,18 @@ def check_infile(infile):
     for kwd in reqmsg:
         try:
             val=f[0].header[kwd]
-        except KeyError,e:
-            print reqmsg[kwd]%(infile)
+        except KeyError as e:
+            print(reqmsg[kwd]%(infile))
             raise e
 
 
 
     #Check multidrizzle status & print warning if necessary
     if 'ndrizim' in f[0].header:
-        print """WARNING: Detected multidrizzle image, but unable to
+        print("""WARNING: Detected multidrizzle image, but unable to
         verify image units. Image may be in electrons/s, not DN/s. If so,
         image should be divided by ADCGAIN value before correction.
-        Proceeding without unit verification. """
+        Proceeding without unit verification. """)
 
 
     #Determine which extension has the image.
@@ -243,7 +243,7 @@ def update_header(f,alpha,zpcorr,zpratio=None):
 def rnlincor(infile,outfile,**opt):
     """ The main routine """
     #numerixenv.check() #Temporary NUMERIX environment check
-    print "rnlincor version: ",__version__
+    print("rnlincor version: ",__version__)
 
     #Translate an option
     zpcorr = not opt['nozpcorr']
@@ -251,8 +251,8 @@ def rnlincor(infile,outfile,**opt):
     #Get the image data
     try:
         f,imgext=check_infile(infile)
-    except Exception, e:
-        print str(e)
+    except Exception as e:
+        print(str(e))
         return
 
     img=f[imgext].data
@@ -260,7 +260,7 @@ def rnlincor(infile,outfile,**opt):
     #Correct it for sky subtraction if necessary
     try:
         skyval=f[imgext].header['skyval']
-        print "Sky subtraction detected: compensating"
+        print("Sky subtraction detected: compensating")
         img=img+skyval
     except KeyError:
         skyval=None
@@ -275,11 +275,11 @@ def rnlincor(infile,outfile,**opt):
     #Pick out the right row from the photometric correction table
     try:
         zprat=getrow(photmode,zpratfile)
-    except IndexError, e:
-        print """Task Aborting: No zero-point correction is available in the
+    except IndexError as e:
+        print("""Task Aborting: No zero-point correction is available in the
         %s file
         for this image's observing mode %s.
-        You may wish to rerun the task with the 'nozpcorr' option set."""%(zpratfile,photmode.upper())
+        You may wish to rerun the task with the 'nozpcorr' option set."""%(zpratfile,photmode.upper()))
         f.close()
         return
 
@@ -290,7 +290,7 @@ def rnlincor(infile,outfile,**opt):
 
     #Interpolate to get the correction at the pivot wavelength
     nonlcor = xyinterp(wave,corr,pivlam)
-    print "Using non-linearity correction %6.4f mag/dex"%nonlcor
+    print("Using non-linearity correction %6.4f mag/dex"%nonlcor)
 
     #Correct from mag/dex to alpha in power law
     alpha = (nonlcor/2.5) + 1  #Add 1 to avoid divide-by-zero in next step?
@@ -301,10 +301,10 @@ def rnlincor(infile,outfile,**opt):
 
     #Apply zero point correction if requested
     if zpcorr:
-        print "Applying zeropoint correction"
+        print("Applying zeropoint correction")
         mul /= zprat.zpratio
     else:
-        print "NOT applying zeropoint correction"
+        print("NOT applying zeropoint correction")
 
 
     #Apply the correction
@@ -347,7 +347,7 @@ def run(*args,**inopt):
     #We always provide input filename
     infile=args[0]
     if not os.path.isfile(infile):
-        raise IOError, '%s not found; task aborting.'%infile
+        raise IOError('%s not found; task aborting.'%infile)
 
     #We sometimes provide output filename
     if (len(args) == 2 and len(args[1])!=0):

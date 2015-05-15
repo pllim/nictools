@@ -40,11 +40,11 @@ Usage example::
 #from FirstDerivatives import DerivVar
 #from Scientific import IterationCountExceededError
 #------------------------------------------------------
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 import numpy as np
 #import numpy.oldnumeric.linear_algebra as LA
 from numpy import linalg as LA
-from SP_FirstDerivatives import DerivVar
+from .SP_FirstDerivatives import DerivVar
 class IterationCountExceededError(ValueError):
     pass
 
@@ -114,7 +114,7 @@ def leastSquaresFit(model, parameters, data, max_iterations=None,
     while 1:
         delta = LA.solve(alpha+l*np.diagonal(alpha)*id,
                                           -0.5*np.array(chi_sq[1]))
-        next_p = map(lambda a,b: a+b, p, delta)
+        next_p = list(map(lambda a,b: a+b, p, delta))
         next_chi_sq, next_alpha = _chiSquare(model, next_p, data)
         if next_chi_sq > chi_sq:
             l = 10.*l
@@ -176,9 +176,9 @@ if __name__ == '__main__':
     data_classical = [(100, 4.999e-8),(200, 5.307e+2),
                       (300, 1.289e+6),(400, 6.559e+7)]
 
-    print leastSquaresFit(f, (1e13,4700), data_classical)
+    print(leastSquaresFit(f, (1e13,4700), data_classical))
 
     def f2(param, t):
         return 1e13*exp(-param[0]/t)
 
-    print leastSquaresFit(f2, (3000.,), data_quantum)
+    print(leastSquaresFit(f2, (3000.,), data_quantum))

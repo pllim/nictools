@@ -79,12 +79,12 @@
 #              embellished error message for this case
 #
 #   06/05/09 - code version 2.04; changed '/' to '//' in quadmean() and added 'from __future__ import division' for upcoming python version
-from __future__ import division  # confidence high
+from __future__ import absolute_import, division, print_function  # confidence high
 import os.path
 import sys, time
 from optparse import OptionParser
-import tfbutil
-import opusutil
+from . import tfbutil
+from . import opusutil
 import numpy as np
 from astropy.io import fits as pyfits
 import stsci.tools
@@ -163,10 +163,10 @@ class CalTempFromBias:
         self.outlist0 = outlist[0]
 
         if (( dry_run == 0) & (self.verbosity >0)):
-            print ' The dry_run option has been selected so keys will not be written.'
+            print(' The dry_run option has been selected so keys will not be written.')
 
         if (self.verbosity >1):
-           print ' Temp_from_bias run on ',self.tfb_run, ', version: ', self.tfb_version
+           print(' Temp_from_bias run on ',self.tfb_run, ', version: ', self.tfb_version)
 
 
     def calctemp(self):
@@ -205,8 +205,8 @@ class CalTempFromBias:
             verbosity = self.verbosity
 
             if ( verbosity > 0):
-              print '   ' ; print '   '
-              print 'Calculating temp for file ',ii,' : ', filename
+              print('   ') ; print('   ')
+              print('Calculating temp for file ',ii,' : ', filename)
 
             try:  # ... opening input in update mode
                fh_raw = pyfits.open( filename, mode='update')
@@ -215,7 +215,7 @@ class CalTempFromBias:
                try:  # ... opening input in read only mode since the user does not have write access
                   fh_raw = pyfits.open( filename)
                   in_flag = 'r'    # readonly
-                  print  '  WARNING : the input file', filename,' could not be opened in update mode, so no keywords will be written.'
+                  print('  WARNING : the input file', filename,' could not be opened in update mode, so no keywords will be written.')
                except:
                   in_flag = 'f'    # fail to open
                   opusutil.PrintMsg("F","ERROR "+ str('Unable to open input file') + str(filename))
@@ -241,7 +241,7 @@ class CalTempFromBias:
             zoffdone_key = raw_header[ 'ZOFFDONE' ]
             zoffdone = zoffdone_key.lstrip().rstrip() # strip leading and trailing whitespace
 
-            if ( obsmode <> 'MULTIACCUM'):
+            if ( obsmode != 'MULTIACCUM'):
                 opusutil.PrintMsg("F","ERROR "+ str('Image must be in MULTIACCUM mode'))
 
             if ( zoffdone == 'PERFORMED'):
@@ -273,7 +273,7 @@ class CalTempFromBias:
                    raw_header["TFBDATE"] = self.tfb_run
 
                self.nonlin_file = None
-               raise IOError,'Unable to open nonlinearity file'
+               raise IOError('Unable to open nonlinearity file')
                return None, None, None ,None, None
 
             # read data from nonlinearity file
@@ -357,17 +357,17 @@ class CalTempFromBias:
                 filter_key = raw_header[ 'FILTER' ]
                 filter = filter_key.lstrip().rstrip()
                 filter = str('BLANK')
-                if (filter <> 'BLANK'):
+                if (filter != 'BLANK'):
                     opusutil.PrintMsg("F","ERROR "+ str('can not determine the temperature from the bias'))
 
     # Calculate the quad medians to feed the temp algorithms; current state values are based on a border=5 mean.
             quads = quadmean(clean, border=5)
 
             if (self.verbosity >1):
-                print ' '
-                print 'Camera: ',camera
-                print 'The results of the quadmean call:'
-                print quads
+                print(' ')
+                print('Camera: ',camera)
+                print('The results of the quadmean call:')
+                print(quads)
 
             # do requested caluculation based on TFBCALC and force settings
             if (tfbcalc == 'PERFORM'):
@@ -380,7 +380,7 @@ class CalTempFromBias:
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
                        raw_header["TFBDONE"] =  "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
-                       print ' The calculated temperature = ' , temp,' and sigma = ', sig
+                       print(' The calculated temperature = ' , temp,' and sigma = ', sig)
                 elif (force.upper()[0] == "B") : #   [ reg test  1c ]
                     force = str("B")
                     [temp, sig ] = do_blind( camera, quads, verbosity )
@@ -389,7 +389,7 @@ class CalTempFromBias:
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
                        raw_header["TFBDONE"] = "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
-                       print ' The calculated temperature = ' , temp,' and sigma = ', sig
+                       print(' The calculated temperature = ' , temp,' and sigma = ', sig)
                 elif (force.upper()[0] == "Q") : #   [ reg test 2 ]
                     [temp, sig ] = do_quietest( camera, quads, verbosity )
                     winner = 3
@@ -397,14 +397,14 @@ class CalTempFromBias:
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
                        raw_header["TFBDONE"] = "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
-                       print ' The calculated temperature = ' , temp,' and sigma = ', sig
+                       print(' The calculated temperature = ' , temp,' and sigma = ', sig)
                 elif (force.upper()[0] == "A") : # auto   #  [   reg test 3 ]
                     [temp2, sig2 ] = do_blind( camera, quads, verbosity )
                     [temp3, sig3 ] = do_quietest( camera, quads, verbosity )
 
                     if ( verbosity > 0):
-                        print ' Blind correction: temp = ' ,temp2,'  sigma = ' , sig2
-                        print ' Quietest quad correction: temp = ' ,temp3,'  sigma = ' , sig3
+                        print(' Blind correction: temp = ' ,temp2,'  sigma = ' , sig2)
+                        print(' Quietest quad correction: temp = ' ,temp3,'  sigma = ' , sig3)
 
                     # Compare the error estimates of algorithms 2 and 3 and return the best one; the
                     #   lowest sigma is the winner.
@@ -417,15 +417,15 @@ class CalTempFromBias:
                        sig = sig3
                        winner = 3
                        if ( verbosity > 0):
-                          print ' The algorithm with the least sigma is quietest quad. '
+                          print(' The algorithm with the least sigma is quietest quad. ')
                     else:   # blind correction has least sigme
                        if ( verbosity > 0):
-                          print ' The algorithm with the least sigma is blind correction. '
+                          print(' The algorithm with the least sigma is blind correction. ')
 
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
                        raw_header["TFBDONE"] = "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
-                       print 'The calculated temperature = ' , temp,' and sigma = ', sig
+                       print('The calculated temperature = ' , temp,' and sigma = ', sig)
                 else : # invalid selection   #  [  reg test 4 ]
                     opusutil.PrintMsg("F","ERROR "+ str('Invalid force selected : ') + str(force))
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
@@ -443,7 +443,7 @@ class CalTempFromBias:
                 fh_raw.close()
                 return None, None, None, None, None
             else: # tfbcalc not set (user running on old file)
-                print ' WARNING : TFBCALC is not set in the input file.'
+                print(' WARNING : TFBCALC is not set in the input file.')
 
                 if ((force == '') | (force == None)) :   #  [  reg test 6 ]
                     opusutil.PrintMsg("F","ERROR "+ str('Because the keyword TFBCALC is not set in the input file and the parameter Force is not set, this run is aborting. If you want to process this file, either set TFBCALC to PERFORM or set Force to an allowed option (not None)'))
@@ -461,7 +461,7 @@ class CalTempFromBias:
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
                        raw_header["TFBDONE"] = "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
-                       print ' The calculated temperature = ' , temp,' and sigma = ', sig
+                       print(' The calculated temperature = ' , temp,' and sigma = ', sig)
 
                 elif (force.upper()[0] == "Q") :    #  [  reg test 8 ]
                     [temp, sig ] = do_quietest( camera, quads, verbosity )
@@ -469,14 +469,14 @@ class CalTempFromBias:
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
                        raw_header["TFBDONE"] = "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
-                       print ' The calculated temperature = ' , temp,' and sigma = ', sig
+                       print(' The calculated temperature = ' , temp,' and sigma = ', sig)
                 elif (force.upper()[0] == "A") : # auto   #  [  reg test 9 ]
                     [temp2, sig2 ] = do_blind( camera, quads, verbosity )
                     [temp3, sig3 ] = do_quietest( camera, quads, verbosity )
 
                     if ( verbosity > 0):
-                        print ' Blind correction: temp = ' ,temp2,'  sigma = ' , sig2
-                        print ' Quietest quad correction: temp = ' ,temp3,'  sigma = ' , sig3
+                        print(' Blind correction: temp = ' ,temp2,'  sigma = ' , sig2)
+                        print(' Quietest quad correction: temp = ' ,temp3,'  sigma = ' , sig3)
 
                     # Compare the error estimates of algorithms 2 and 3 and return the best one; the
                     #   lowest sigma is the winner.
@@ -490,17 +490,17 @@ class CalTempFromBias:
                        winner = 3
 
                        if ( verbosity > 0):
-                          print ' The algorithm with the least sigma is quietest quad.'
+                          print(' The algorithm with the least sigma is quietest quad.')
                     else:
                        if ( verbosity > 0):
-                          print ' The algorithm with the least sigma is blind correction.'
+                          print(' The algorithm with the least sigma is blind correction.')
 
                     if ( verbosity > 0):
-                       print ' The least sigma is ', sig, ' with corresponding temp = ',temp
+                       print(' The least sigma is ', sig, ' with corresponding temp = ',temp)
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
                        raw_header["TFBDONE"] = "PERFORMED"
                     if ((self.verbosity >1) & (dry_run == 0)) :
-                       print ' The calculated temperature = ' , temp,' and sigma = ', sig
+                       print(' The calculated temperature = ' , temp,' and sigma = ', sig)
                 else : # invalid selection    #  [  reg test 10 ]
                     opusutil.PrintMsg("F","ERROR "+ str(' Invalid selection of force, so aborting.'))
                     if ((in_flag[0] != 'f') & ( dry_run != 0)) :
@@ -562,7 +562,7 @@ class CalTempFromBias:
             this_file = self.outlist0[ii]
 
             if (hdr_key == None):
-                if (self.hdr_key <> None):  # use value given in constructor
+                if (self.hdr_key != None):  # use value given in constructor
                     hdr_key = self.hdr_key
                 else:
                     opusutil.PrintMsg("F","ERROR "+ str('No value has been specified for hdr_key'))
@@ -570,10 +570,10 @@ class CalTempFromBias:
             else:
                 self.hdr_key = hdr_key # for later use by print_pars()
                 if ( self.verbosity > 0):
-                    print ' Using value of hdr_key = ' , hdr_key,' that has been passed to update_header()'
+                    print(' Using value of hdr_key = ' , hdr_key,' that has been passed to update_header()')
 
             if (err_key == None):
-                if (self.err_key <> None):  # use value given in constructor
+                if (self.err_key != None):  # use value given in constructor
                     err_key = self.err_key
                 else:
                     opusutil.PrintMsg("F","ERROR "+ str('No value has been specified for err_key'))
@@ -581,10 +581,10 @@ class CalTempFromBias:
             else:
                 self.err_key = err_key # for later use by print_pars()
                 if ( self.verbosity > 0):
-                    print ' Using value of err_key = ' , err_key,' that has been passed to update_header()'
+                    print(' Using value of err_key = ' , err_key,' that has been passed to update_header()')
 
             if (edit_type == None):
-                if (self.edit_type <> None):  # use value given in constructor
+                if (self.edit_type != None):  # use value given in constructor
                     edit_type = self.edit_type
                 else:
                     opusutil.PrintMsg("F","ERROR "+ str('No value has been specified for edit_type'))
@@ -592,7 +592,7 @@ class CalTempFromBias:
             else:
                 self.edit_type = edit_type # for later use by print_pars()
                 if ( self.verbosity > 0):
-                    print ' Using value of edit_type = ' , edit_type,' that has been passed to update_header()'
+                    print(' Using value of edit_type = ' , edit_type,' that has been passed to update_header()')
 
             if (winner[0] == 2):# 'blind-correction'
                 meth_used = "BLIND CORRECTION"
@@ -600,7 +600,7 @@ class CalTempFromBias:
                 meth_used = "QUIETEST-QUAD"
 
             if ( self.verbosity > 0):
-                 print ' The algorithm used is ' , meth_used
+                 print(' The algorithm used is ' , meth_used)
 
             comm = str('Temp from bias, sigma=')+str(sig)+str(' (K)')
 
@@ -635,30 +635,30 @@ class CalTempFromBias:
                 pass
 
         if (( self.verbosity > 0) & (self.dry_run != 0 )):
-            print ' The headers have been updated.'
+            print(' The headers have been updated.')
 
         return None
 
     def print_pars(self):
         """ Print parameters used.
         """
-        print ' The parameters used are :'
-        print '  input_file list:  ' , self.input_file
-        print '  edit_type:  ' , self.edit_type
-        print '  hdr_key: ' ,  self.hdr_key
-        print '  err_key: ' ,  self.err_key
-        print '  nref_par:  ' , self.nref_par
-        print '  force: ' ,  self.force
-        print '  noclean: ' ,  self.noclean
-        print '  dry_run: ' ,  self.dry_run
-        print '  verbosity: ' ,  self.verbosity
-        print ' For the files given by the input file list: '
+        print(' The parameters used are :')
+        print('  input_file list:  ' , self.input_file)
+        print('  edit_type:  ' , self.edit_type)
+        print('  hdr_key: ' ,  self.hdr_key)
+        print('  err_key: ' ,  self.err_key)
+        print('  nref_par:  ' , self.nref_par)
+        print('  force: ' ,  self.force)
+        print('  noclean: ' ,  self.noclean)
+        print('  dry_run: ' ,  self.dry_run)
+        print('  verbosity: ' ,  self.verbosity)
+        print(' For the files given by the input file list: ')
         for ii in range(self.num_files):
            try :
                 this_file = self.outlist0[ii]
-                print '  input_file[',ii,']:  ' , this_file
+                print('  input_file[',ii,']:  ' , this_file)
                 this_nl_file = self.nonlinfile_list[ii]
-                print '  nonlinearity file[',ii,']: ' ,  this_nl_file
+                print('  nonlinearity file[',ii,']: ' ,  this_nl_file)
            except :
                 pass
 
@@ -728,11 +728,11 @@ def do_blind( camera, quads, verbosity):
 
            temps2 = ["NA","NA","NA","%5.2f" % (temp2)]
         else:
-           print ' Camera ', camera,' not supported'
+           print(' Camera ', camera,' not supported')
            return None, None
 
         if (verbosity >1):
-            print ' Algorithm - Blind Correction: ',temp2,' (K) +/- ',sigma2,' (sigma)'
+            print(' Algorithm - Blind Correction: ',temp2,' (K) +/- ',sigma2,' (sigma)')
 
         return temp2, sigma2
 
@@ -786,11 +786,11 @@ def do_quietest( camera, quads, verbosity ):
 
            temps3 = ["NA","%5.2f" % (t1),"%5.2f" % (t2),"NA"]
         else:
-           print ' Camera ', camera,' not supported'
+           print(' Camera ', camera,' not supported')
            return None, None
 
         if (verbosity >1):
-            print ' Algorithm - Quietest Quad Correction: ',temp3,' (K) +/- ',sigma3,' (sigma)'
+            print(' Algorithm - Quietest Quad Correction: ',temp3,' (K) +/- ',sigma3,' (sigma)')
 
         return temp3, sigma3
 
@@ -955,10 +955,10 @@ if __name__=="__main__":
                 stat = tfb.update_header( temp, sigma, winner)
 
              if ( in_flag[0] == 'r' ): # display since file was not writablee
-                print ' The calculated temperature and sigma are: ', temp[0],' ', sigma[0]
+                print(' The calculated temperature and sigma are: ', temp[0],' ', sigma[0])
 
              if ( (stat == None )and (verbosity > 0) | ( in_flag[0] == 'r' )):
                tfb.print_pars()
 
-    except Exception, errmess:
+    except Exception as errmess:
          opusutil.PrintMsg("F","ERROR "+ str(errmess))

@@ -16,6 +16,6 @@ This release also includes alpha versions of the following tasks:
 Utility and library functions used by these tasks are also included in this
 module.
 """
-
+from __future__ import absolute_import
 from .version import * 
 
