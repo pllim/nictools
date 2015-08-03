@@ -34,7 +34,6 @@ __vdate__="2007-11-30"
 
 #.....................................................
 import os, sys, shutil
-import exceptions
 import math
 import numpy as np
 import stsci.ndimage as ndimage
@@ -127,7 +126,7 @@ class Readout:
 
 #..........................................................................
 # Exception definitions
-class NoPuftError(exceptions.Exception):
+class NoPuftError(Exception):
     pass
 
 #..........................................................................
