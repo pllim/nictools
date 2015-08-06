@@ -37,7 +37,6 @@ __vdate__="2010-10-20"
 from stsci.tools import fileutil
 import os
 import numpy as np
-import exceptions
 from astropy.io import fits as pyfits
 from stsci.imagestats import ImageStats as imstat #pyssg lib
 from stsci.imagestats.histogram1d import histogram1d
@@ -518,15 +517,15 @@ class Exposure:
 
 #..........................................................................
 # Exception definitions
-class NoPersistError(exceptions.Exception):
+class NoPersistError(Exception):
     pass
-class BadThreshError(exceptions.Exception):
+class BadThreshError(Exception):
     pass
-class NegScaleError(exceptions.Exception):
+class NegScaleError(Exception):
     pass
-class InsuffImprovement(exceptions.Exception):
+class InsuffImprovement(Exception):
     pass
-class AlreadyDone(exceptions.Exception):
+class AlreadyDone(Exception):
     pass
 #.............................................................................
 #Helper functions:
