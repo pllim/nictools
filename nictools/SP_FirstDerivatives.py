@@ -162,9 +162,13 @@ class DerivVar:
     def __abs__(self): # cf maple signum # derivate of abs
         absvalue = abs(self.value)
         return DerivVar(absvalue, [(self.value/absvalue)*a for a in self.deriv])
-    def __nonzero__(self):
+
+    def __bool__(self):
         return self.value != 0
-    __bool__ = __nonzero__
+
+    def __nonzero__(self):
+        return self.__bool__()
+
     def __add__(self, other):
         return DerivVar(self.value + other.value,
                         _mapderiv(lambda a,b: a+b, self.deriv, other.deriv))
