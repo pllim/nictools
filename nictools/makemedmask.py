@@ -7,7 +7,7 @@
 from __future__ import absolute_import, division, print_function  # confidence high
 
 import numpy as np
-import pyfits, sys, string, time
+from astropy.io import fits as pyfits, sys, string, time
 from stsci.convolve import boxcar
 from optparse import OptionParser
 from . import fsutil, opusutil
