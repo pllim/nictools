@@ -6,8 +6,10 @@
 # History: 03/04/08 - first version
 from __future__ import absolute_import, division, print_function  # confidence high
 
+import sys
+import time
 import numpy as np
-from astropy.io import fits as pyfits, sys, string, time
+from astropy.io import fits as pyfits
 from stsci.convolve import boxcar
 from optparse import OptionParser
 from . import fsutil, opusutil
@@ -51,7 +53,7 @@ class Makemedmask:
         if (medfile == None):  medfile = fsutil.medfile
         if (callist == None):  callist = fsutil.callist
         if (type(thresh) == str) : # ensure that thresh is a float
-           thresh = string.atof(thresh)
+           thresh = float(thresh)
 
         self.thresh = thresh
         self.medfile = medfile
