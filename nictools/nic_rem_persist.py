@@ -38,7 +38,7 @@ from . import opusutil
 from . import persutil
 from scipy import ndimage    # for median_filter
 
-__version__ = "1.6 (2009 Mar 26)"
+__version__ = "1.7 (2016 Feb 23)"
 
 
 _success  = 0
