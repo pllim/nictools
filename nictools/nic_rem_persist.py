@@ -28,6 +28,7 @@
 #  12/15/08 - Will use default values for used_lo and and persist_lo if BEPEUSELO and BEPVALLO are not in the PMODFILE.
 #  01/15/09 - Changing interface so that ped file and cal file are input, and correction based on calculation of
 #             ped file (CALCFILE) is applied to cal file (TARGFILE). This corresponds to TRAC ticket #317.
+#  02/23/16 - Use SciPy
 #
 from __future__ import absolute_import, division, print_function  # confidence high
 from astropy.io import fits as pyfits
@@ -35,7 +36,7 @@ import numpy as N
 import sys, time
 from . import opusutil
 from . import persutil
-import stsci.ndimage as ndimage    # for median_filter
+from scipy import ndimage    # for median_filter
 
 __version__ = "1.6 (2009 Mar 26)"
 

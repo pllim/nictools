@@ -19,15 +19,14 @@ puftcorr: Module for estimating and removing "Mr. Staypuft" signal from
 :Dependencies:
 
     - numpy v1.0.2dev3534 or higher
-    - pyfits v1.1b4 or higher
-    - convolve v2.0 or higher
-    - ndimage  v2.0 or higher
+    - astropy
+    - scipy
 
 """
 from __future__ import division, print_function
 #.....................................................
-__version__="0.17"
-__vdate__="2007-11-30"
+__version__="0.18"
+__vdate__="2016-02-23"
 
 #.....................................................
 #from stsci.tools import numerixenv  #Temporary NUMERIX environment check
@@ -36,8 +35,8 @@ __vdate__="2007-11-30"
 import os, sys, shutil
 import math
 import numpy as np
-import stsci.ndimage as ndimage
-import stsci.convolve as conv
+import scipy import ndimage
+import scipy.signal import convolve
 from astropy.io import fits as pyfits
 
 #History:
@@ -206,8 +205,8 @@ def get_corr (im, pars):
     ekern = np.exp(-np.arange(ln1*pars.tx)/pars.hh)
     qkern = pars.a1*np.arange(ln1*pars.tx) + pars.a2
 
-    e = conv.convolve (p0, ekern, mode=conv.FULL)
-    q = conv.convolve (p1, qkern, mode=conv.FULL)
+    e = convolve (p0, ekern, mode='full')
+    q = convolve (p1, qkern, mode='full')
     b = e[0:quad_len] + q[0:quad_len]
 
     # transform the correction vector back into a 2-d image quad
