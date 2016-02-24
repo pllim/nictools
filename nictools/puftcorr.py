@@ -35,8 +35,8 @@ __vdate__="2016-02-23"
 import os, sys, shutil
 import math
 import numpy as np
-import scipy import ndimage
-import scipy.signal import convolve
+from scipy import ndimage
+from scipy.signal import convolve
 from astropy.io import fits as pyfits
 
 #History:
