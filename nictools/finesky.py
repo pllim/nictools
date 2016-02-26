@@ -4,18 +4,19 @@
 # Program: finesky.py
 # Purpose: routine to create median mask
 # History: 03/07/08 - first version
+#          02/23/16 - Use SciPy
 
 from __future__ import absolute_import, division, print_function  # confidence high
 import numpy as np
 from astropy.io import fits as pyfits
 import  sys, string, time
-from stsci.convolve import boxcar
+from scipy.signal import boxcar
 from optparse import OptionParser
 from . import fsutil
 from . import opusutil
 import shutil
 
-__version__ = "0.1 (2008 Mar 12)"
+__version__ = "0.2 (2016 Feb 23)"
 
 ASIZE = 256 # length of cal array
 ERROR_RETURN = 2
