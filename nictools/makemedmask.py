@@ -11,14 +11,16 @@ import sys
 import time
 import numpy as np
 from astropy.io import fits as pyfits
-from scipy.signal import boxcar
+from scipy import ndimage
+from scipy import signal
 from optparse import OptionParser
 from . import fsutil, opusutil
 
-__version__ = "0.2 (2016 Feb 23)"
+__version__ = "0.2 (2016 Mar 02)"
 
 ASIZE = 256 # length of cal array
 ERROR_RETURN = 2
+
 
 class Makemedmask:
     """ Create and output a median mask from cal files and blt files
@@ -111,8 +113,9 @@ class Makemedmask:
          im_cube[:,:,kk] = fh_cal[1].data
          blot_cube[:,:,kk] = fh_blot[0].data
 
-   # make mask from blotted images
+      # make mask from blotted images
       mask_cube = np.zeros((ASIZE, ASIZE, num_files), dtype=np.float64)
+      boxcar_kernel = signal.boxcar((3, 3)) / 9
 
       for ii in range(num_files):
          mm = np.zeros((ASIZE, ASIZE), dtype=np.float64)
@@ -121,9 +124,11 @@ class Makemedmask:
          ur =  dif > thresh
          mm[ ur ] = 1
 
-   # expand the mask
-         mm = boxcar( mm,(3,3))  # smooth over 3x3 ; this will differ from IDL's "smooth" which ...
-         #  ... leaves boundary values unchanged, which is not an option in convolve's boxcar
+         # expand the mask.
+         # smooth over 3x3 ; this will differ from IDL's "smooth" which ...
+         #  ... leaves boundary values unchanged, which is not an option in
+         # convolve's boxcar
+         mm = ndimage.convolve(mm, boxcar_kernel)
 
          ur =  mm != 0.0
          mm = np.zeros((ASIZE, ASIZE), dtype=np.float64)
@@ -158,7 +163,6 @@ class Makemedmask:
         print('  thresh:  ' , self.thresh)
         print('  medfile:  ' , self.medfile)
         print('  callist:  ' , self.callist)
-
 
 
 def write_to_file(data, filename, hdr, verbosity):
